@@ -237,7 +237,7 @@ class ImageGenerator:
         if logo:
             x = (self.WIDTH - logo.width) // 2
             img.paste(logo, (x, y), logo)
-            y += logo.height + 20
+            y += logo.height + gaps
 
         # Arabic
         for l in ar_lines:
@@ -247,7 +247,7 @@ class ImageGenerator:
             draw.text((x, y), l, font=ar_font, fill=(10, 10, 10))
             y += bbox[3] - bbox[1] + 8
 
-        y += 12
+        y += gaps
         # transliteration
         for l in tri_lines:
             bbox = draw.textbbox((0, 0), l, font=tri_font)
@@ -256,11 +256,11 @@ class ImageGenerator:
             draw.text((x, y), l, font=tri_font, fill=(40, 40, 40))
             y += bbox[3] - bbox[1] + 6
 
-        y += 12
+        y += gaps
         if separator:
             x = (self.WIDTH - separator.width) // 2
             img.paste(separator, (x, y), separator)
-            y += separator.height + 12
+            y += separator.height + gaps
 
         # translation
         for l in trans_lines:
@@ -270,11 +270,11 @@ class ImageGenerator:
             draw.text((x, y), l, font=trans_font, fill=(30, 30, 30))
             y += bbox[3] - bbox[1] + 6
 
-        y += 12
+        y += gaps
         if separator:
             x = (self.WIDTH - separator.width) // 2
             img.paste(separator, (x, y), separator)
-            y += separator.height + 12
+            y += separator.height + gaps
 
         # reference
         bbox = draw.textbbox((0, 0), reference, font=ref_font)
