@@ -113,9 +113,16 @@ class ImageGenerator:
         cur = []
         for w in words:
             test_line = " ".join(cur + [w])
+            
+            # Reshape RTL text BEFORE measuring to get true ligature widths
+            measure_line = test_line
+            if is_rtl:
+                measure_line = get_display(arabic_reshaper.reshape(test_line))
+                
             # measure
-            bbox = draw.textbbox((0, 0), test_line, font=font)
+            bbox = draw.textbbox((0, 0), measure_line, font=font)
             wbox = bbox[2] - bbox[0]
+            
             if wbox <= max_width or not cur:
                 cur.append(w)
             else:
