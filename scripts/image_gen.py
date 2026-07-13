@@ -17,8 +17,10 @@ class ImageGenerator:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # fonts
-        default_ar = self.assets_dir.parent / "fonts" / "Amiri-Regular.ttf"
+        default_ar = self.assets_dir.parent / "fonts" / "_extracted_fonts" / "Amiri-Regular.ttf"
         self.ar_font_path = self._resolve_font_path(default_ar)
+        if not self.ar_font_path.exists():
+            raise FileNotFoundError(f"Arabic font not found at {self.ar_font_path}")
         self.en_font_path = self._resolve_font_path(self.assets_dir.parent / "fonts" / "PlayfairDisplay-Regular.ttf")
 
         # templates
