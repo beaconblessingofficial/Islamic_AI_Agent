@@ -1,0 +1,24 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+
+# Project output (large; not for version control)
+output/
+uploads/
+logs/
+backups/
+
+# Temp files
+*.tmp
+*.log
+
+# Agent kill switch (ephemeral)
+STOP.flag
+
+# OAuth token (never commit)
+youtube-oauth2.json
