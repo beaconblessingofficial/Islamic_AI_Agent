@@ -6,12 +6,10 @@ sys.path.insert(0, str(BASE))
 
 from scripts.image_gen import ImageGenerator
 from database.dao import VerseDB
+from scripts.config import config
 
-assets = BASE / "templates"
-output = BASE / "output"
-
-gen = ImageGenerator(assets, output)
-db = VerseDB(BASE / "database" / "quran_posts.csv", BASE / "database" / "used_verses.txt")
+gen = ImageGenerator(config.ASSETS_DIR, config.OUTPUT_DIR)
+db = VerseDB(config.CSV_PATH, config.USED_VERSES_PATH)
 
 v = db.select_random()
 p = gen.generate_post(v, output_name="single_sample.png")

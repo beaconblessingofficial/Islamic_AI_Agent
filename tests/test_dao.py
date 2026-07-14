@@ -15,11 +15,11 @@ test is safe to run against the real corpus.
 from pathlib import Path
 
 from database.dao import REQUIRED_COLUMNS, VerseDB
+from scripts.config import config
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-CSV_FILE = BASE_DIR / "database" / "quran_posts.csv"
-USED_FILE = BASE_DIR / "database" / "used_verses.txt"
+CSV_FILE = config.CSV_PATH
+USED_FILE = config.USED_VERSES_PATH
 
 
 def _make_db_with_clean_used() -> VerseDB:

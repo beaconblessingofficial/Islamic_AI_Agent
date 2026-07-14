@@ -1,16 +1,16 @@
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
 
 from scripts.image_gen import ImageGenerator
 from database.dao import VerseDB
-
+from scripts.config import config
 
 def main():
-    assets = BASE_DIR / "templates"
-    out = BASE_DIR / "output"
-    gen = ImageGenerator(assets, out)
-    db = VerseDB(BASE_DIR / "database" / "quran_posts.csv", BASE_DIR / "database" / "used_verses.txt")
+    gen = ImageGenerator(config.ASSETS_DIR, config.OUTPUT_DIR)
+    db = VerseDB(config.CSV_PATH, config.USED_VERSES_PATH)
 
     paths = []
     for i in range(20):

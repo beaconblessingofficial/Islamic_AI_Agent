@@ -6,27 +6,25 @@ from typing import Optional, Dict
 import arabic_reshaper
 from bidi.algorithm import get_display
 
+from scripts.config import config
+
 
 class ImageGenerator:
-    WIDTH = 1080
-    HEIGHT = 1080
-
-    def __init__(self, assets_dir: Path, output_dir: Path):
+    def __init__(self, assets_dir: Path = config.ASSETS_DIR, output_dir: Path = config.OUTPUT_DIR):
         self.assets_dir = Path(assets_dir)
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # fonts
-        default_ar = self.assets_dir.parent / "fonts" / "_extracted_fonts" / "Amiri-Regular.ttf"
-        self.ar_font_path = self._resolve_font_path(default_ar)
+        self.ar_font_path = self._resolve_font_path(config.ARABIC_FONT_PATH)
         if not self.ar_font_path.exists():
             raise FileNotFoundError(f"Arabic font not found at {self.ar_font_path}")
-        self.en_font_path = self._resolve_font_path(self.assets_dir.parent / "fonts" / "PlayfairDisplay-Regular.ttf")
+        self.en_font_path = self._resolve_font_path(config.ENGLISH_FONT_PATH)
 
         # templates
-        self.background_path = self.assets_dir / "background.jpg"
-        self.logo_path = self.assets_dir / "logo.png"
-        self.separator_path = self.assets_dir / "separator.png"
+        self.background_path = config.BACKGROUND_IMAGE
+        self.logo_path = config.LOGO_IMAGE
+        self.separator_path = config.SEPARATOR_IMAGE
 
     def _resolve_font_path(self, path: Path) -> Path:
         # Some font files may actually be zipped archives (header PK..). If so, extract the first TTF/OTF inside.
@@ -70,30 +68,6 @@ class ImageGenerator:
             Path("C:/Windows/Fonts/tahoma.ttf"),
             Path("C:/Windows/Fonts/segeo.ttf"),
         ]
-
-    def _get_arabic_font_path(self) -> Path:
-        # Prefer the local Quranic Amiri font package, then fallback to Windows Arabic-capable fonts.
-        local_arabi = self.assets_dir.parent / "fonts" / "Amiri-Regular.ttf"
-        if local_arabi.exists():
-            try:
-                return self._resolve_font_path(local_arabi)
-            except Exception:
-                pass
-
-        windows_candidates = [
-            Path("C:/Windows/Fonts/arabtype.ttf"),
-            Path("C:/Windows/Fonts/tahoma.ttf"),
-            Path("C:/Windows/Fonts/arial.ttf"),
-        ]
-        for candidate in windows_candidates:
-            if candidate.exists():
-                try:
-                    ImageFont.truetype(str(candidate), 72)
-                    return candidate
-                except Exception:
-                    continue
-
-        raise FileNotFoundError("No usable Arabic font found. Install Amiri or an Arabic-capable Windows font.")
 
     def _load_font(self, path: Path, size: int) -> ImageFont.FreeTypeFont:
         try:
@@ -139,31 +113,31 @@ class ImageGenerator:
 
     def generate_post(self, verse: Dict[str, str], output_name: Optional[str] = None) -> Path:
         # Prepare canvas
-        img = Image.new("RGB", (self.WIDTH, self.HEIGHT), color=(245, 244, 240))
+        img = Image.new("RGB", (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), color=config.BG_COLOR)
         draw = ImageDraw.Draw(img)
 
         # background
         if self.background_path.exists():
-            bg = Image.open(self.background_path).convert("RGB").resize((self.WIDTH, self.HEIGHT))
-            img = Image.blend(bg, img, alpha=0.35)
+            bg = Image.open(self.background_path).convert("RGB").resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
+            img = Image.blend(bg, img, alpha=config.BG_ALPHA)
             draw = ImageDraw.Draw(img)
 
-        margin_x = 80
-        content_width = self.WIDTH - margin_x * 2
+        margin_x = config.MARGIN_X
+        content_width = config.IMAGE_WIDTH - margin_x * 2
 
         # Load logo and separator if available
         logo = None
         if self.logo_path.exists():
             logo = Image.open(self.logo_path).convert("RGBA")
-            max_logo_w = int(self.WIDTH * 0.25)
-            max_logo_h = int(self.HEIGHT * 0.12)
+            max_logo_w = int(config.IMAGE_WIDTH * 0.25)
+            max_logo_h = int(config.IMAGE_HEIGHT * 0.12)
             logo.thumbnail((max_logo_w, max_logo_h), Image.LANCZOS)
 
         separator = None
         if self.separator_path.exists():
             separator = Image.open(self.separator_path).convert("RGBA")
             max_sep_w = content_width
-            max_sep_h = int(self.HEIGHT * 0.08)
+            max_sep_h = int(config.IMAGE_HEIGHT * 0.08)
             separator.thumbnail((max_sep_w, max_sep_h), Image.LANCZOS)
             if separator.width > max_sep_w or separator.height > max_sep_h:
                 separator = separator.resize((min(separator.width, max_sep_w), min(separator.height, max_sep_h)), Image.LANCZOS)
@@ -171,10 +145,10 @@ class ImageGenerator:
                 separator = None
 
         # Fonts baseline sizes
-        ar_size = 72
-        trans_size = 30
-        tri_size = 36
-        ref_size = 22
+        ar_size = config.ARABIC_FONT_SIZE_BASE
+        trans_size = config.TRANS_FONT_SIZE_BASE
+        tri_size = config.TRANSLIT_FONT_SIZE_BASE
+        ref_size = config.REF_FONT_SIZE_BASE
 
         # load fonts
         ar_font = self._load_font(self.ar_font_path, ar_size)
@@ -202,7 +176,7 @@ class ImageGenerator:
 
             # compute total height
             total_h = 0
-            gaps = 20
+            gaps = config.GAPS
             if logo:
                 total_h += logo.height + gaps
             # arabic block
@@ -229,7 +203,7 @@ class ImageGenerator:
             bbox = draw.textbbox((0, 0), reference, font=ref_font)
             total_h += bbox[3] - bbox[1]
 
-            if total_h <= self.HEIGHT - 160:
+            if total_h <= config.IMAGE_HEIGHT - 160:
                 break
             # else reduce sizes
             ar_size = max(28, int(ar_size * 0.9))
@@ -238,11 +212,11 @@ class ImageGenerator:
             ref_size = max(10, int(ref_size * 0.95))
 
         # Start drawing from vertical center to balance
-        y = (self.HEIGHT - total_h) // 2
+        y = (config.IMAGE_HEIGHT - total_h) // 2
 
         # logo
         if logo:
-            x = (self.WIDTH - logo.width) // 2
+            x = (config.IMAGE_WIDTH - logo.width) // 2
             img.paste(logo, (x, y), logo)
             y += logo.height + gaps
 
@@ -250,8 +224,8 @@ class ImageGenerator:
         for l in ar_lines:
             bbox = draw.textbbox((0, 0), l, font=ar_font)
             w = bbox[2] - bbox[0]
-            x = (self.WIDTH - w) // 2
-            draw.text((x, y), l, font=ar_font, fill=(10, 10, 10))
+            x = (config.IMAGE_WIDTH - w) // 2
+            draw.text((x, y), l, font=ar_font, fill=config.COLOR_ARABIC)
             y += bbox[3] - bbox[1] + 8
 
         y += gaps
@@ -259,13 +233,13 @@ class ImageGenerator:
         for l in tri_lines:
             bbox = draw.textbbox((0, 0), l, font=tri_font)
             w = bbox[2] - bbox[0]
-            x = (self.WIDTH - w) // 2
-            draw.text((x, y), l, font=tri_font, fill=(40, 40, 40))
+            x = (config.IMAGE_WIDTH - w) // 2
+            draw.text((x, y), l, font=tri_font, fill=config.COLOR_TRANSLIT)
             y += bbox[3] - bbox[1] + 6
 
         y += gaps
         if separator:
-            x = (self.WIDTH - separator.width) // 2
+            x = (config.IMAGE_WIDTH - separator.width) // 2
             img.paste(separator, (x, y), separator)
             y += separator.height + gaps
 
@@ -273,21 +247,21 @@ class ImageGenerator:
         for l in trans_lines:
             bbox = draw.textbbox((0, 0), l, font=trans_font)
             w = bbox[2] - bbox[0]
-            x = (self.WIDTH - w) // 2
-            draw.text((x, y), l, font=trans_font, fill=(30, 30, 30))
+            x = (config.IMAGE_WIDTH - w) // 2
+            draw.text((x, y), l, font=trans_font, fill=config.COLOR_TRANS)
             y += bbox[3] - bbox[1] + 6
 
         y += gaps
         if separator:
-            x = (self.WIDTH - separator.width) // 2
+            x = (config.IMAGE_WIDTH - separator.width) // 2
             img.paste(separator, (x, y), separator)
             y += separator.height + gaps
 
         # reference
         bbox = draw.textbbox((0, 0), reference, font=ref_font)
         w = bbox[2] - bbox[0]
-        x = (self.WIDTH - w) // 2
-        draw.text((x, y), reference, font=ref_font, fill=(90, 90, 90))
+        x = (config.IMAGE_WIDTH - w) // 2
+        draw.text((x, y), reference, font=ref_font, fill=config.COLOR_REF)
 
         # save
         ts = int(time.time() * 1000)

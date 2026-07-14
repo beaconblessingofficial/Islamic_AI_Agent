@@ -1,12 +1,15 @@
+import sys
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
 
 from database.dao import VerseDB
+from scripts.config import config
 
 
 def main():
-    csv_file = BASE_DIR / "database" / "quran_posts.csv"
-    used_file = BASE_DIR / "database" / "used_verses.txt"
+    csv_file = config.CSV_PATH
+    used_file = config.USED_VERSES_PATH
 
     # backup existing used file
     backup = None
@@ -14,6 +17,7 @@ def main():
         backup = used_file.read_text(encoding="utf-8")
 
     db = VerseDB(csv_file, used_file)
+    db.reset_used()
     total = len(db.verses)
     seen = set()
 
