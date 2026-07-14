@@ -1,4 +1,23 @@
-Pillow>=9.0.0
-arabic-reshaper>=2.1.0
+# ── Phase 0 (required now) ──────────────────────────────────────────────────
+Pillow>=10.0.0
+arabic-reshaper>=3.0.0
 python-bidi>=0.4.2
+pandas>=2.0.0
+numpy>=1.24.0
 python-dotenv>=1.0.0
+pydantic>=2.0.0
+python-dateutil>=2.8.0
+
+# ── Phase 2 (uncomment when starting reel generation) ───────────────────────
+# moviepy>=2.0.0
+# imageio-ffmpeg>=0.5.0
+# opencv-python>=4.8.0
+
+# ── Phase 3 (uncomment when starting caption generation) ────────────────────
+# openai>=1.30.0
+# anthropic>=0.30.0
+
+# ── Phase 4-5 (uncomment when starting publish / scheduling) ────────────────
+# requests>=2.31.0
+# APScheduler>=3.10.0
+# google-api-python-client>=2.100.0

@@ -112,7 +112,8 @@ The scripts split cleanly into four groups. Each entry below names the file, wha
 |---|---|---|
 | `verse_db.py` | `VerseDB` class: loads `quran_posts.csv`, tracks `used_verses.txt`, validates required columns, picks a random unused verse, auto-resets when exhausted. Atomic write of the used-verse file (`.tmp` + replace). | P1-04: promote to `database/dao.py`, add `select_by_theme`, `list_recently_used(days)`, `soft_reset`. |
 | `image_gen.py` | `ImageGenerator` class: composites logo + Arabic (reshaped/bidi-corrected) + transliteration + translation + reference onto the background plate, dynamic font sizing to fit 1080×1080. Has its own `__main__` smoke test. | P0-01/P0-13: pick as canonical, fix the `from scripts.verse_db` import (P0-03), wrap in `scripts/make_post.py` module entry point. |
-| `gen_single.py` | The de-facto CLI: instantiates `ImageGenerator` + `VerseDB`, picks one random verse, writes `output/single_sample.png`. | P0-13: replaced by `python -m scripts.make_post`. |
+| `make_post.py` | **Canonical CLI entry point.** Wraps `ImageGenerator` + `VerseDB`. Supports `--verse-id`, `--theme`, `--count`, `--output-name`, `--dry-run`. | ✅ A2: Created. |
+| ~~`gen_single.py`~~ | ~~De-facto CLI (legacy single-post runner). Replaced by `make_post.py`.~~ | ✅ A2: Deleted. |
 | `paths.py` | Pure module that exposes `BASE_DIR`, `UPLOADS`, `OUTPUT`, `DATABASE`, `NASHEEDS`, `TEMPLATES`, `FONTS` from the project root. Includes stray `print()` debug lines. | X-06: becomes the single source of absolute paths for every other script. |
 
 ### B. Production code to retire
@@ -150,7 +151,7 @@ The scripts split cleanly into four groups. Each entry below names the file, wha
 
 | File | Role | TODO |
 |---|---|---|
-| `scripts/make_post.py` | Module entry point wrapping `ImageGenerator` so `python -m scripts.make_post` works from any cwd. | P0-13. |
+| ~~`scripts/make_post.py`~~ | ~~Planned~~ — **✅ Created (A2).** Canonical CLI: `python -m scripts.make_post [--verse-id N] [--theme T] [--count N] [--output-name NAME] [--dry-run]`. | A2. |
 | `scripts/make_reel.py` | Module entry point for `video_gen.ReelGenerator`. | P2-10. |
 | `scripts/make_caption.py` | Module entry point for `caption_gen.CaptionGenerator`. | P3-09. |
 | `scripts/publish.py` | Module entry point for `publishers/*`. | P4-10. |
@@ -182,15 +183,16 @@ The scripts split cleanly into four groups. Each entry below names the file, wha
 
 ---
 
-## How a request flows today (before Phase 0)
+## How a request flows today (after Phase 0 / Task A2)
 
 ```
-gen_single.py
-    └──> verse_db.VerseDB          (loads quran_posts.csv + used_verses.txt)
-            └──> random unused verse
-    └──> image_gen.ImageGenerator   (templates/, fonts/)
+scripts/make_post.py  [--verse-id N] [--theme T] [--count N] [--dry-run]
+    └──> scripts.config.Config         (reads .env overrides)
+    └──> database.dao.VerseDB          (loads quran_posts.csv + used_verses.txt)
+            └──> random / theme / id selection
+    └──> scripts.image_gen.ImageGenerator   (templates/, fonts/)
             └──> ImageDraw composes logo + arabic + translit + trans + ref
-    └──> output/post_<ts>.png
+    └──> output/post_<YYYYMMDD_HHMMSS>.png
 ```
 
 ## How a request should flow at the end of the roadmap (after Phase 5)

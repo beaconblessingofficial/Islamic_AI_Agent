@@ -55,14 +55,14 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
   - verify: each font has exactly one copy.
 - [ ] **0.2.9** Move diagnostic PNGs from `output/` to `output/_archive/`: every `test_*.png`, `font_render_test*.png`, `debug_post.png`, `inspect_arabic.png`, `single_sample.png`. Also move the entire `output/arabic_font_tests/` subdirectory.
   - verify: `output/` contains only production `post_*.png` runs (currently the ~200 timestamped files; those stay).
-- [ ] **0.2.10** Rewrite `requirements.txt` with the real dependency set: `Pillow>=10.0.0`, `arabic-reshaper>=3.0.0`, `python-bidi>=0.4.2`, `pandas>=2.0.0`, `numpy>=1.24.0`, `python-dotenv>=1.0.0`, `pydantic>=2.0.0`, `python-dateutil>=2.8.0`. Add commented-out lines for the later phases: `moviepy>=2.0.0`, `imageio-ffmpeg>=0.5.0`, `opencv-python>=4.8.0`, `openai>=1.30.0`, `anthropic>=0.30.0`, `requests>=2.31.0`, `APScheduler>=3.10.0`, `google-api-python-client>=2.100.0`.
+- [x] **0.2.10** Rewrite `requirements.txt` with the real dependency set: `Pillow>=10.0.0`, `arabic-reshaper>=3.0.0`, `python-bidi>=0.4.2`, `pandas>=2.0.0`, `numpy>=1.24.0`, `python-dotenv>=1.0.0`, `pydantic>=2.0.0`, `python-dateutil>=2.8.0`. Add commented-out lines for the later phases: `moviepy>=2.0.0`, `imageio-ffmpeg>=0.5.0`, `opencv-python>=4.8.0`, `openai>=1.30.0`, `anthropic>=0.30.0`, `requests>=2.31.0`, `APScheduler>=3.10.0`, `google-api-python-client>=2.100.0`.
   - verify: `pip install -r requirements.txt` succeeds in a fresh venv.
 - [ ] **0.2.11** Create `.env.example` with all keys documented (no secrets): `OPENAI_API_KEY=`, `ANTHROPIC_API_KEY=`, `IG_ACCESS_TOKEN=`, `IG_USER_ID=`, `FB_PAGE_ID=`, `FB_PAGE_ACCESS_TOKEN=`, `YT_OAUTH_CLIENT_SECRETS=`, `LOG_LEVEL=INFO`, `TIMEZONE=UTC`, `LLM_DAILY_BUDGET_USD=5.00`.
 - [ ] **0.2.12** Create `.gitignore`: `.env`, `output/`, `uploads/`, `logs/`, `__pycache__/`, `venv/`, `*.tmp`, `STOP.flag`, `youtube-oauth2.json`, `backups/`.
-- [ ] **0.2.13** Create `scripts/make_post.py` as the proper module entry point: `python -m scripts.make_post [--verse-id N] [--theme T] [--count N] [--dry-run]`. It wraps `ImageGenerator` + `VerseDB`.
+- [x] **0.2.13** Create `scripts/make_post.py` as the proper module entry point: `python -m scripts.make_post [--verse-id N] [--theme T] [--count N] [--dry-run]`. It wraps `ImageGenerator` + `VerseDB`.
   - verify: `python -m scripts.make_post` produces one image in `output/`.
-- [ ] **0.2.14** Add `from dotenv import load_dotenv; load_dotenv()` at the top of every entry-point script (`make_post.py` and any future `make_reel.py`, `make_caption.py`, `publish.py`, `agent.py`).
-- [ ] **0.2.15** Delete `scripts/gen_single.py` after `make_post.py` is verified. Update `PROJECT_MAP.md` to point to `make_post` as the canonical entry.
+- [x] **0.2.14** Add `from dotenv import load_dotenv; load_dotenv()` at the top of every entry-point script (`make_post.py` and any future `make_reel.py`, `make_caption.py`, `publish.py`, `agent.py`).
+- [x] **0.2.15** Delete `scripts/gen_single.py` after `make_post.py` is verified. Update `PROJECT_MAP.md` to point to `make_post` as the canonical entry.
   - verify: `python -m scripts.make_post` still works; `gen_single.py` no longer exists.
 
 ---
