@@ -86,10 +86,10 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
 
 ### 1.2 — Convert themes to JSON
 
-- [ ] **1.2.1** Create `database/themes.json` with the 5 themes from `themes.csv` (`Guidance, Forgiveness, Patience, Knowledge, Family`) plus 15 more from the corpus (`Steadfastness, Repentance, Trust, Balance, Prayer, Acceptance, Submission, Power, Reflection, Mercy, Ease, Facilitation, Communication, Understanding, Need, Faith`).
-- [ ] **1.2.2** For each theme, define: `caption_prompt` (system-prompt fragment, 2-3 sentences), `hashtags[]` (3-5 hashtags), `accent_color` (hex string for poster accent), `nasheed_pool[]` (filenames from `nasheeds/`).
+- [x] **1.2.1** Create `database/themes.json` with the 5 themes from `themes.csv` (`Guidance, Forgiveness, Patience, Knowledge, Family`) plus 15 more from the corpus (`Steadfastness, Repentance, Trust, Balance, Prayer, Acceptance, Submission, Power, Reflection, Mercy, Ease, Facilitation, Communication, Understanding, Need, Faith`).
+- [x] **1.2.2** For each theme, define: `caption_prompt` (system-prompt fragment, 2-3 sentences), `hashtags[]` (3-5 hashtags), `accent_color` (hex string for poster accent), `nasheed_pool[]` (filenames from `nasheeds/`).
   - verify: `json.load(open("database/themes.json"))` returns a dict with all 20 themes; each has all 4 fields.
-- [ ] **1.2.3** Delete `database/themes.csv` and `database/themes-2.csv`.
+- [x] **1.2.3** Delete `database/themes.csv` and `database/themes-2.csv`.
   - verify: `Get-ChildItem database\*` shows 3 files (CSV, JSON, txt).
 
 ### 1.3 — Promote the data layer
@@ -118,10 +118,10 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
 
 ### 1.5 — Make the image generator theme-aware
 
-- [ ] **1.5.1** In `image_gen.py`, add an optional `accent_color: str | None` parameter to `generate_post`. Default `None` (no accent).
-- [ ] **1.5.2** When `accent_color` is set, draw a 2 px horizontal line under the reference text in that color. The line is centered, 30% of canvas width.
+- [x] **1.5.1** In `image_gen.py`, add an optional `accent_color: str | None` parameter to `generate_post`. Default `None` (no accent).
+- [x] **1.5.2** When `accent_color` is set, draw a 2 px horizontal line under the reference text in that color. The line is centered, 30% of canvas width.
   - verify: `gen.generate_post(verse, accent_color="#3B7A57")` shows a green line under the reference.
-- [ ] **1.5.3** In `scripts/make_post.py`, add `--theme T` flag. When set, pick a verse from that theme and pass `accent_color` from `themes.json`.
+- [x] **1.5.3** In `scripts/make_post.py`, add `--theme T` flag. When set, pick a verse from that theme and pass `accent_color` from `themes.json`.
   - verify: `python -m scripts.make_post --theme Forgiveness` produces an image with the Forgiveness accent.
 - [ ] **1.5.4** Add `--count N` flag to `make_post.py`. Runs the pipeline N times with N distinct verses.
   - verify: `python -m scripts.make_post --count 5` produces 5 images; no duplicate verses.

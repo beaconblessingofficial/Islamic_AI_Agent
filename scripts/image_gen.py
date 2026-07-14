@@ -111,7 +111,7 @@ class ImageGenerator:
 
         return lines
 
-    def generate_post(self, verse: Dict[str, str], output_name: Optional[str] = None) -> Path:
+    def generate_post(self, verse: Dict[str, str], output_name: Optional[str] = None, accent_color: Optional[str] = None) -> Path:
         # Prepare canvas
         img = Image.new("RGB", (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), color=config.BG_COLOR)
         draw = ImageDraw.Draw(img)
@@ -262,6 +262,20 @@ class ImageGenerator:
         w = bbox[2] - bbox[0]
         x = (config.IMAGE_WIDTH - w) // 2
         draw.text((x, y), reference, font=ref_font, fill=config.COLOR_REF)
+
+        # accent line
+        if accent_color:
+            try:
+                hex_str = accent_color.lstrip('#')
+                r, g, b = tuple(int(hex_str[i:i+2], 16) for i in (0, 2, 4))
+                line_y = y + bbox[3] - bbox[1] + 8
+                line_w = int(config.IMAGE_WIDTH * 0.3)
+                line_x = (config.IMAGE_WIDTH - line_w) // 2
+                draw.line([(line_x, line_y), (line_x + line_w, line_y)], fill=(r, g, b), width=2)
+            except Exception as e:
+                import sys
+                print(f"[WARNING] Could not draw accent line for color {accent_color}: {e}", file=sys.stderr)
+
 
         # save
         ts = int(time.time() * 1000)

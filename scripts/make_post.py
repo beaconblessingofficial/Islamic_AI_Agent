@@ -42,7 +42,7 @@ load_dotenv(_REPO_ROOT / ".env")
 
 from scripts.config import config           # noqa: E402
 from scripts.image_gen import ImageGenerator  # noqa: E402
-from database.dao import VerseDB            # noqa: E402
+from database.dao import VerseDB, ThemeDB     # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -83,6 +83,7 @@ def run(
 
     gen = ImageGenerator(config.ASSETS_DIR, config.OUTPUT_DIR)
     db = VerseDB(config.CSV_PATH, config.USED_VERSES_PATH)
+    theme_db = ThemeDB(config.THEMES_PATH)
 
     paths: list[Path] = []
 
@@ -123,7 +124,16 @@ def run(
 
         # --- Generate image ---------------------------------------------
         name = _build_output_name(output_name, i, count)
-        path = gen.generate_post(verse, output_name=name)
+        
+        verse_theme = verse.get("theme")
+        accent_color = None
+        if verse_theme:
+            try:
+                accent_color = theme_db.get(verse_theme).get("accent_color")
+            except KeyError:
+                pass
+                
+        path = gen.generate_post(verse, output_name=name, accent_color=accent_color)
         paths.append(path)
         print(
             f"[{i + 1}/{count}] Generated: {path}  "

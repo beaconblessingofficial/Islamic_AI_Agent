@@ -19,6 +19,7 @@ class Config:
     # -----------------------------
     CSV_PATH = Path(os.getenv("CSV_PATH", DATABASE / "quran_posts.csv"))
     USED_VERSES_PATH = Path(os.getenv("USED_VERSES_PATH", DATABASE / "used_verses.txt"))
+    THEMES_PATH = Path(os.getenv("THEMES_PATH", DATABASE / "themes.json"))
     ASSETS_DIR = Path(os.getenv("ASSETS_DIR", TEMPLATES))
     OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", OUTPUT))
     FONTS_DIR = Path(os.getenv("FONTS_DIR", FONTS))

@@ -12,9 +12,11 @@ preserved for backwards compatibility with Phase 1 callers. Concurrency safety
 """
 
 import csv
+import json
 import random
+import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 
 REQUIRED_COLUMNS = [
@@ -200,3 +202,35 @@ class VerseDB:
             return []
         cutoff = max(0, len(self.used_ids) - days)
         return list(reversed(self.used_ids[cutoff:]))
+
+
+class ThemeDB:
+    """Loads and queries the themes registry."""
+
+    def __init__(self, json_path: Path | str):
+        self.json_path = Path(json_path)
+        self.themes: Dict[str, Dict[str, Any]] = {}
+        self._load()
+
+    def _load(self):
+        if not self.json_path.exists():
+            raise FileNotFoundError(f"Themes JSON not found: {self.json_path}")
+        
+        with self.json_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        for theme_name, details in data.items():
+            color = details.get("accent_color", "")
+            if not re.match(r"^#[0-9A-Fa-f]{6}$", color):
+                raise ValueError(f"Theme '{theme_name}' has invalid accent_color: {color}")
+            self.themes[theme_name] = details
+
+    def get(self, theme: str) -> Dict[str, Any]:
+        """Get theme configuration by exact name (case-sensitive as keys)."""
+        if theme not in self.themes:
+            raise KeyError(f"Theme not found: {theme}")
+        return self.themes[theme]
+
+    def names(self) -> List[str]:
+        """Return all registered theme names."""
+        return list(self.themes.keys())

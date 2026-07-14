@@ -1,0 +1,128 @@
+{
+  "Guidance": {
+    "caption_prompt": "Write a reflective caption about seeking divine guidance and direction in life. Emphasize trusting Allah's path when feeling lost. Keep the tone hopeful and grounded in faith.",
+    "hashtags": ["#Guidance", "#Islam", "#Quran", "#Faith", "#Hidayah"],
+    "accent_color": "#2E7D32",
+    "nasheed_pool": ["calm_01.mp3", "calm_02.mp3"]
+  },
+  "Forgiveness": {
+    "caption_prompt": "Write a heartfelt caption about seeking Allah's forgiveness and His infinite mercy. Remind the reader that no sin is too great for Allah's pardon. Keep the tone sincere and encouraging.",
+    "hashtags": ["#Forgiveness", "#Islam", "#Muslim", "#Quran", "#Tawbah"],
+    "accent_color": "#1565C0",
+    "nasheed_pool": ["emotional_01.mp3", "emotional_02.mp3"]
+  },
+  "Patience": {
+    "caption_prompt": "Write an uplifting caption about patience and perseverance through hardship. Highlight that Allah is with those who are patient and that trials lead to elevation. Keep the tone calm and strengthening.",
+    "hashtags": ["#Patience", "#Sabr", "#Islam", "#Quran", "#Trust"],
+    "accent_color": "#6A1E55",
+    "nasheed_pool": ["calm_01.mp3", "emotional_01.mp3"]
+  },
+  "Knowledge": {
+    "caption_prompt": "Write an inspiring caption about the virtue of seeking knowledge in Islam. Emphasize that learning is an act of worship and that knowledge brings one closer to Allah. Keep the tone intellectually motivating.",
+    "hashtags": ["#Knowledge", "#IslamicKnowledge", "#Quran", "#Ilm", "#Islam"],
+    "accent_color": "#E65100",
+    "nasheed_pool": ["calm_01.mp3", "calm_02.mp3"]
+  },
+  "Family": {
+    "caption_prompt": "Write a warm caption about the blessings of family in Islam. Highlight gratitude for spouses and children and the importance of raising a righteous household. Keep the tone loving and grateful.",
+    "hashtags": ["#Family", "#IslamicFamily", "#Quran", "#Islam", "#Gratitude"],
+    "accent_color": "#AD1457",
+    "nasheed_pool": ["calm_02.mp3", "emotional_02.mp3"]
+  },
+  "Steadfastness": {
+    "caption_prompt": "Write a firm and encouraging caption about holding fast to faith during doubt and difficulty. Emphasize asking Allah to keep hearts steadfast and unwavering. Keep the tone resolute and reassuring.",
+    "hashtags": ["#Steadfastness", "#Istiqamah", "#Quran", "#Islam", "#Faith"],
+    "accent_color": "#37474F",
+    "nasheed_pool": ["calm_01.mp3", "emotional_01.mp3"]
+  },
+  "Repentance": {
+    "caption_prompt": "Write a gentle and honest caption about turning back to Allah with sincere repentance. Remind the reader that acknowledging wrongdoing is the first step to spiritual renewal. Keep the tone humble and hopeful.",
+    "hashtags": ["#Repentance", "#Tawbah", "#Islam", "#Quran", "#Mercy"],
+    "accent_color": "#4E342E",
+    "nasheed_pool": ["emotional_01.mp3", "emotional_02.mp3"]
+  },
+  "Trust": {
+    "caption_prompt": "Write a confident and peaceful caption about placing complete trust in Allah. Emphasize that relying on Allah alone brings tranquility and removes anxiety. Keep the tone serene and faith-affirming.",
+    "hashtags": ["#Trust", "#Tawakkul", "#Islam", "#Quran", "#Allah"],
+    "accent_color": "#00695C",
+    "nasheed_pool": ["calm_01.mp3", "calm_02.mp3"]
+  },
+  "Balance": {
+    "caption_prompt": "Write a balanced and reflective caption about seeking good in both this world and the hereafter. Emphasize that Islam encourages a wholesome life that does not neglect either dimension. Keep the tone wise and grounded.",
+    "hashtags": ["#Balance", "#Dunya", "#Akhirah", "#Islam", "#Quran"],
+    "accent_color": "#558B2F",
+    "nasheed_pool": ["calm_01.mp3", "calm_02.mp3"]
+  },
+  "Prayer": {
+    "caption_prompt": "Write a devotional caption about the beauty and importance of establishing daily prayer in Islam. Highlight that salah is the pillar of the faith and a direct connection with Allah. Keep the tone spiritual and motivating.",
+    "hashtags": ["#Prayer", "#Salah", "#Islam", "#Quran", "#Worship"],
+    "accent_color": "#283593",
+    "nasheed_pool": ["calm_02.mp3", "emotional_01.mp3"]
+  },
+  "Acceptance": {
+    "caption_prompt": "Write a humble and sincere caption about offering deeds to Allah and asking for their acceptance. Emphasize that only Allah can accept our acts of worship and that sincerity is key. Keep the tone earnest and worshipful.",
+    "hashtags": ["#Acceptance", "#Ikhlas", "#Islam", "#Quran", "#Dua"],
+    "accent_color": "#4527A0",
+    "nasheed_pool": ["emotional_01.mp3", "emotional_02.mp3"]
+  },
+  "Submission": {
+    "caption_prompt": "Write a peaceful caption about the beauty of full submission to Allah's will. Explain that Islam means peace achieved through surrender to the Divine. Keep the tone serene and spiritually deep.",
+    "hashtags": ["#Submission", "#Islam", "#Muslim", "#Quran", "#Surrender"],
+    "accent_color": "#00838F",
+    "nasheed_pool": ["calm_01.mp3", "calm_02.mp3"]
+  },
+  "Power": {
+    "caption_prompt": "Write a majestic and awe-inspiring caption about Allah's absolute sovereignty over all creation. Remind the reader that all power belongs to Allah alone and that humility before Him is strength. Keep the tone reverent and uplifting.",
+    "hashtags": ["#Power", "#Allah", "#Sovereignty", "#Quran", "#Islam"],
+    "accent_color": "#B71C1C",
+    "nasheed_pool": ["emotional_01.mp3", "emotional_02.mp3"]
+  },
+  "Reflection": {
+    "caption_prompt": "Write a thoughtful caption that invites deep contemplation of Allah's creation. Encourage the reader to see the signs of Allah in the world around them. Keep the tone meditative and intellectually engaging.",
+    "hashtags": ["#Reflection", "#Tafakkur", "#Quran", "#Islam", "#Signs"],
+    "accent_color": "#33691E",
+    "nasheed_pool": ["calm_01.mp3", "calm_02.mp3"]
+  },
+  "Mercy": {
+    "caption_prompt": "Write a tender and compassionate caption about Allah's boundless mercy that encompasses all things. Remind the reader that Allah's mercy always outweighs His wrath and to never despair of it. Keep the tone warm and consoling.",
+    "hashtags": ["#Mercy", "#Rahma", "#Islam", "#Quran", "#Allah"],
+    "accent_color": "#0277BD",
+    "nasheed_pool": ["calm_02.mp3", "emotional_01.mp3"]
+  },
+  "Ease": {
+    "caption_prompt": "Write an encouraging caption about asking Allah to ease burdens and open hearts to His light. Remind the reader that with every hardship comes ease. Keep the tone gentle and relieving.",
+    "hashtags": ["#Ease", "#Relief", "#Islam", "#Quran", "#Dua"],
+    "accent_color": "#00796B",
+    "nasheed_pool": ["calm_01.mp3", "calm_02.mp3"]
+  },
+  "Facilitation": {
+    "caption_prompt": "Write a motivational caption about asking Allah to make one's affairs easy and smooth. Emphasize that nothing is difficult when Allah facilitates it. Keep the tone optimistic and task-focused.",
+    "hashtags": ["#Facilitation", "#Tayseer", "#Quran", "#Islam", "#Dua"],
+    "accent_color": "#2E7D32",
+    "nasheed_pool": ["calm_01.mp3", "calm_02.mp3"]
+  },
+  "Communication": {
+    "caption_prompt": "Write a thoughtful caption about asking Allah to remove barriers in speech and expression so the truth may be conveyed clearly. Emphasize the importance of clear and truthful communication in Islam. Keep the tone purposeful and sincere.",
+    "hashtags": ["#Communication", "#Speech", "#Quran", "#Islam", "#Clarity"],
+    "accent_color": "#1B5E20",
+    "nasheed_pool": ["calm_02.mp3", "emotional_02.mp3"]
+  },
+  "Understanding": {
+    "caption_prompt": "Write an insightful caption about the gift of understanding and comprehension as a blessing from Allah. Emphasize the importance of hearts that truly grasp the message of Islam. Keep the tone contemplative and grateful.",
+    "hashtags": ["#Understanding", "#Fiqh", "#Quran", "#Islam", "#Wisdom"],
+    "accent_color": "#1A237E",
+    "nasheed_pool": ["calm_01.mp3", "calm_02.mp3"]
+  },
+  "Need": {
+    "caption_prompt": "Write a humble and vulnerable caption about acknowledging complete dependence on Allah's generosity. Remind the reader that recognizing one's need before Allah is a sign of spiritual maturity. Keep the tone honest and heartfelt.",
+    "hashtags": ["#Need", "#Dependence", "#Quran", "#Islam", "#Dua"],
+    "accent_color": "#6D4C41",
+    "nasheed_pool": ["emotional_01.mp3", "emotional_02.mp3"]
+  },
+  "Faith": {
+    "caption_prompt": "Write a soul-stirring caption about the importance of dying upon true faith and living a life devoted to Allah. Remind the reader to ask Allah for a good ending. Keep the tone deeply spiritual and life-affirming.",
+    "hashtags": ["#Faith", "#Iman", "#Islam", "#Quran", "#Akhirah"],
+    "accent_color": "#880E4F",
+    "nasheed_pool": ["emotional_01.mp3", "emotional_02.mp3"]
+  }
+}
