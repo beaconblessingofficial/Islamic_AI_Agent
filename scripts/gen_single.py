@@ -2,10 +2,10 @@ from pathlib import Path
 import sys
 
 BASE = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE / "scripts"))
+sys.path.insert(0, str(BASE))
 
-from image_gen import ImageGenerator
-from verse_db import VerseDB
+from scripts.image_gen import ImageGenerator
+from database.dao import VerseDB
 
 assets = BASE / "templates"
 output = BASE / "output"

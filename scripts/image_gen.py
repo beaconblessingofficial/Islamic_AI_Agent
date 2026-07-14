@@ -304,7 +304,8 @@ if __name__ == '__main__':
     out = BASE / "output"
     gen = ImageGenerator(assets, out)
     # quick smoke test: use first verse from CSV
-    from scripts.verse_db import VerseDB
+    sys.path.insert(0, str(BASE))
+    from database.dao import VerseDB
     db = VerseDB(BASE / "database" / "quran_posts.csv", BASE / "database" / "used_verses.txt")
     v = db.select_random()
     p = gen.generate_post(v)
