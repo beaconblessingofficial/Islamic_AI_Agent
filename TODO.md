@@ -144,19 +144,19 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
 
 ### 2.1 — Tooling decision
 
-- [ ] **2.1.1** Confirm `moviepy`, `imageio-ffmpeg`, and `opencv-python` are installed in the venv (`pip show moviepy`). If not, install per `requirements.txt`.
+- [x] **2.1.1** Confirm `moviepy`, `imageio-ffmpeg`, and `opencv-python` are installed in the venv (`pip show moviepy`). If not, install per `requirements.txt`.
 
 ### 2.2 — Add the SQLite history database (also enables 1.4.2)
 
-- [ ] **2.2.1** Create `database/schema.sql` with tables:
+- [x] **2.2.1** Create `database/schema.sql` with tables:
   - `posts` (post_id, created_at, verse_id, theme, image_path, reel_path, caption_id, status, published_at, engagement_json).
   - `post_platforms` (id, post_id, platform, platform_post_id, platform_url, published_at, last_polled_at, engagement_json).
   - `nasheed_history` (id, nasheed_file, used_at, post_id).
   - `runs` (id, started_at, finished_at, dry_run, cost_usd, errors_json, manifest_path).
   - verify: `sqlite3 database/post_history.sqlite < database/schema.sql` succeeds.
-- [ ] **2.2.2** Create `database/history.py` with `init_db`, `log_post`, `mark_published`, `update_engagement`, `list_recent(n)`, `record_nasheed_use`, `get_nasheed_recently_used(days)`. All methods return typed dicts.
-- [ ] **2.2.3** Wire `init_db()` to run at the start of every entry-point script.
-- [ ] **2.2.4** BLOCKED on 2.2.1-2.2.3. Add `tests/test_history.py` covering: insert, update, query by date range, engagement round-trip. All must pass on a fresh DB.
+- [x] **2.2.2** Create `database/history.py` with `init_db`, `log_post`, `mark_published`, `update_engagement`, `list_recent(n)`, `record_nasheed_use`, `get_nasheed_recently_used(days)`. All methods return typed dicts.
+- [x] **2.2.3** Wire `init_db()` to run at the start of every entry-point script.
+- [x] **2.2.4** BLOCKED on 2.2.1-2.2.3. Add `tests/test_history.py` covering: insert, update, query by date range, engagement round-trip. All must pass on a fresh DB.
 
 ### 2.3 — Build the reel generator skeleton
 

@@ -9,9 +9,9 @@ pydantic>=2.0.0
 python-dateutil>=2.8.0
 
 # ── Phase 2 (uncomment when starting reel generation) ───────────────────────
-# moviepy>=2.0.0
-# imageio-ffmpeg>=0.5.0
-# opencv-python>=4.8.0
+moviepy>=2.0.0
+imageio-ffmpeg>=0.5.0
+opencv-python>=4.8.0
 
 # ── Phase 3 (uncomment when starting caption generation) ────────────────────
 # openai>=1.30.0

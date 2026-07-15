@@ -23,3 +23,6 @@ STOP.flag
 
 # OAuth token (never commit)
 youtube-oauth2.json
+
+# Database
+*.sqlite

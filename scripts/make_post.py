@@ -43,6 +43,7 @@ load_dotenv(_REPO_ROOT / ".env")
 from scripts.config import config           # noqa: E402
 from scripts.image_gen import ImageGenerator  # noqa: E402
 from database.dao import VerseDB, ThemeDB     # noqa: E402
+from database import history                  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +82,7 @@ def run(
 ) -> list[Path]:
     """Generate *count* images and return their output paths."""
 
+    history.init_db()
     gen = ImageGenerator(config.ASSETS_DIR, config.OUTPUT_DIR)
     db = VerseDB(config.CSV_PATH, config.USED_VERSES_PATH)
     theme_db = ThemeDB(config.THEMES_PATH)
