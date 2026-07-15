@@ -16,6 +16,7 @@ backups/
 # Temp files
 *.tmp
 *.log
+*.lock
 
 # Agent kill switch (ephemeral)
 STOP.flag

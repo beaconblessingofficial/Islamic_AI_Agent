@@ -7,14 +7,20 @@ This module owns:
     used-verses ledger, with automatic reset on exhaustion.
 
 The atomic-write contract for the used-verses ledger (`.tmp` + `replace`) is
-preserved for backwards compatibility with Phase 1 callers. Concurrency safety
-(file lock or SQLite) is deferred to Phase 2.
+preserved for backwards compatibility with Phase 1 callers.  Concurrency is
+guarded by a cross-platform advisory file lock (Task 1.4, Option A).  The lock
+covers the full read-modify-write cycle to prevent TOCTOU races when multiple
+processes run ``make_post`` simultaneously.  A sidecar ``.lock`` file is used
+so the data file itself is never locked.
 """
 
+import contextlib
 import csv
 import json
 import random
 import re
+import sys
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
@@ -31,12 +37,87 @@ REQUIRED_COLUMNS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Cross-platform advisory file lock
+# ---------------------------------------------------------------------------
+
+@contextlib.contextmanager
+def _file_lock(lock_path: Path, timeout: float = 10.0):
+    """Cross-platform advisory file lock with timeout.
+
+    Uses ``msvcrt.locking`` on Windows and ``fcntl.flock`` on POSIX.
+    The lock file is created if it does not exist.
+
+    Parameters
+    ----------
+    lock_path:
+        Path to the sidecar lock file (e.g. ``used_verses.lock``).
+    timeout:
+        Maximum seconds to wait for the lock before raising ``TimeoutError``.
+    """
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    # Ensure the lock file exists.  pathlib.touch() is atomic on both
+    # Windows and POSIX and never truncates.
+    lock_path.touch(exist_ok=True)
+    # If the file is empty (first touch), write a sentinel byte so
+    # msvcrt has a byte range to lock.
+    if lock_path.stat().st_size == 0:
+        try:
+            with open(lock_path, "ab") as init_fh:
+                init_fh.write(b"L")
+        except OSError:
+            pass  # another thread may have written already
+
+    fh = None
+    acquired = False
+    deadline = time.monotonic() + timeout
+    try:
+        # Retry loop: on Windows, both the open() and the locking() call
+        # can raise PermissionError when another thread/process holds a
+        # handle.  We retry everything until we succeed or time out.
+        while True:
+            try:
+                if fh is None:
+                    fh = open(lock_path, "r+b")  # noqa: SIM115
+                fh.seek(0)
+                if sys.platform == "win32":
+                    import msvcrt
+                    msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                acquired = True
+                break
+            except (OSError, BlockingIOError):
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(
+                        f"Could not acquire file lock {lock_path} "
+                        f"within {timeout}s"
+                    )
+                time.sleep(0.05)
+        yield
+    finally:
+        if acquired and fh is not None:
+            try:
+                if sys.platform == "win32":
+                    import msvcrt
+                    msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+            except OSError:
+                pass
+        if fh is not None:
+            fh.close()
+
+
 class VerseDB:
     """Loads, validates, and queries the Quran verse corpus."""
 
     def __init__(self, csv_path: Path, used_path: Path):
         self.csv_path = Path(csv_path)
         self.used_path = Path(used_path)
+        self._lock_path = self.used_path.with_suffix(".lock")
         self.verses: Dict[int, Dict[str, str]] = {}
         self.used_ids: List[int] = []
         self._load_csv()
@@ -79,17 +160,27 @@ class VerseDB:
         if not self.used_path.exists():
             self.used_ids = []
             return
-        with self.used_path.open("r", encoding="utf-8") as fh:
-            ids = []
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    ids.append(int(line))
-                except ValueError:
-                    continue
-            self.used_ids = ids
+        # On Windows, reading can fail transiently when another process is
+        # in the middle of an atomic replace.  Retry briefly.
+        deadline = time.monotonic() + 2.0
+        while True:
+            try:
+                with self.used_path.open("r", encoding="utf-8") as fh:
+                    ids = []
+                    for line in fh:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            ids.append(int(line))
+                        except ValueError:
+                            continue
+                    self.used_ids = ids
+                return
+            except PermissionError:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.05)
 
     def _persist_used(self):
         # Atomic write: write to .tmp, then replace the original.
@@ -97,7 +188,17 @@ class VerseDB:
         with tmp.open("w", encoding="utf-8") as fh:
             for uid in self.used_ids:
                 fh.write(f"{uid}\n")
-        tmp.replace(self.used_path)
+        # On Windows, replace can fail transiently when another process has
+        # the target file open for reading.  Retry briefly.
+        deadline = time.monotonic() + 2.0
+        while True:
+            try:
+                tmp.replace(self.used_path)
+                return
+            except PermissionError:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.05)
 
     def _get_unused_ids(self) -> List[int]:
         all_ids = set(self.verses.keys())
@@ -116,13 +217,16 @@ class VerseDB:
     # ----- public: used-verses ledger -----
 
     def mark_used(self, vid: int):
-        if vid not in self.used_ids:
-            self.used_ids.append(vid)
-            self._persist_used()
+        with _file_lock(self._lock_path):
+            self._load_used()
+            if vid not in self.used_ids:
+                self.used_ids.append(vid)
+                self._persist_used()
 
     def reset_used(self):
-        self.used_ids = []
-        self._persist_used()
+        with _file_lock(self._lock_path):
+            self.used_ids = []
+            self._persist_used()
 
     def soft_reset(self, older_than_days: int = 30) -> int:
         """Clear used-verses entries older than the cutoff.
@@ -134,35 +238,43 @@ class VerseDB:
         """
         if older_than_days <= 0:
             return 0
-        keep = self.used_ids[-older_than_days:]
-        removed = len(self.used_ids) - len(keep)
-        if removed > 0:
-            self.used_ids = keep
-            self._persist_used()
-        return removed
+        with _file_lock(self._lock_path):
+            self._load_used()
+            keep = self.used_ids[-older_than_days:]
+            removed = len(self.used_ids) - len(keep)
+            if removed > 0:
+                self.used_ids = keep
+                self._persist_used()
+            return removed
 
     # ----- public: selection -----
 
     def select_random(self) -> Dict[str, str]:
-        # pick from unused; if exhausted, reset and continue
-        unused = self._get_unused_ids()
-        if not unused:
-            self.reset_used()
+        # Hold the lock for the entire read-pick-mark-write cycle so that
+        # two concurrent processes cannot select the same verse.
+        with _file_lock(self._lock_path):
+            self._load_used()
             unused = self._get_unused_ids()
+            if not unused:
+                self.used_ids = []
+                self._persist_used()
+                unused = self._get_unused_ids()
 
-        attempts = 0
-        while unused:
-            vid = random.choice(unused)
-            verse = self.verses.get(vid)
-            attempts += 1
-            if verse and self.validate_verse(verse):
-                self.mark_used(vid)
-                return verse
-            # invalid verse -> mark used to avoid infinite loop
-            self.mark_used(vid)
-            unused = self._get_unused_ids()
+            while unused:
+                vid = random.choice(unused)
+                verse = self.verses.get(vid)
+                if verse and self.validate_verse(verse):
+                    if vid not in self.used_ids:
+                        self.used_ids.append(vid)
+                        self._persist_used()
+                    return verse
+                # invalid verse -> mark used to avoid infinite loop
+                if vid not in self.used_ids:
+                    self.used_ids.append(vid)
+                    self._persist_used()
+                unused = self._get_unused_ids()
 
-        raise RuntimeError("No valid verses available")
+            raise RuntimeError("No valid verses available")
 
     def select_by_id(self, vid: int) -> Optional[Dict[str, str]]:
         return self.verses.get(int(vid))

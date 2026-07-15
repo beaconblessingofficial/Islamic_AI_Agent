@@ -193,3 +193,124 @@ def test_list_recently_used_returns_tail_of_ledger():
         assert db.list_recently_used(days=0) == []
     finally:
         _restore_used_backup(backup)
+
+
+# ---------------------------------------------------------------------------
+# Task A4: Concurrency-safety tests
+# ---------------------------------------------------------------------------
+
+def _cleanup_lock():
+    """Remove the sidecar lock file if it exists."""
+    lock_file = USED_FILE.with_suffix(".lock")
+    if lock_file.exists():
+        lock_file.unlink()
+
+
+def test_concurrent_select_random_no_duplicates():
+    """Two threads calling select_random on separate VerseDB instances
+    never pick the same verse (Task 1.4 acceptance test)."""
+    import threading
+
+    backup = USED_FILE.read_text(encoding="utf-8") if USED_FILE.exists() else None
+    try:
+        db1 = _make_db_with_clean_used()
+        db2 = VerseDB(CSV_FILE, USED_FILE)
+        results = [None, None]
+        errors = [None, None]
+
+        def pick(idx, db):
+            try:
+                results[idx] = db.select_random()
+            except Exception as e:
+                errors[idx] = e
+
+        t1 = threading.Thread(target=pick, args=(0, db1))
+        t2 = threading.Thread(target=pick, args=(1, db2))
+        t1.start()
+        t2.start()
+        t1.join(timeout=15)
+        t2.join(timeout=15)
+
+        assert errors[0] is None, f"Thread 1 error: {errors[0]}"
+        assert errors[1] is None, f"Thread 2 error: {errors[1]}"
+        assert results[0] is not None
+        assert results[1] is not None
+        assert results[0]["id"] != results[1]["id"], (
+            f"Both threads picked the same verse: {results[0]['id']}"
+        )
+    finally:
+        _restore_used_backup(backup)
+        _cleanup_lock()
+
+
+def test_concurrent_mark_used_file_integrity():
+    """After concurrent mark_used calls from separate VerseDB instances,
+    the file contains all expected unique ids with no duplicates."""
+    import threading
+
+    backup = USED_FILE.read_text(encoding="utf-8") if USED_FILE.exists() else None
+    try:
+        _make_db_with_clean_used()  # start clean
+        ids_to_mark = list(VerseDB(CSV_FILE, USED_FILE).verses.keys())[:10]
+        errors: list = []
+
+        def mark(vid):
+            try:
+                thread_db = VerseDB(CSV_FILE, USED_FILE)
+                thread_db.mark_used(vid)
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=mark, args=(vid,)) for vid in ids_to_mark]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=15)
+
+        assert not errors, f"Errors during concurrent mark_used: {errors}"
+
+        final_db = VerseDB(CSV_FILE, USED_FILE)
+        for vid in ids_to_mark:
+            assert vid in final_db.used_ids, (
+                f"id {vid} missing after concurrent writes"
+            )
+        assert len(final_db.used_ids) == len(set(final_db.used_ids)), (
+            "Duplicate ids in used_verses.txt after concurrent writes"
+        )
+    finally:
+        _restore_used_backup(backup)
+        _cleanup_lock()
+
+
+def test_lock_file_created_on_first_use():
+    """After a write operation, the sidecar .lock file exists."""
+    backup = USED_FILE.read_text(encoding="utf-8") if USED_FILE.exists() else None
+    lock_file = USED_FILE.with_suffix(".lock")
+    try:
+        _cleanup_lock()
+        db = _make_db_with_clean_used()
+        db.mark_used(1)
+        assert lock_file.exists(), "Lock file was not created"
+    finally:
+        _restore_used_backup(backup)
+        _cleanup_lock()
+
+
+def test_lock_released_after_operation():
+    """After mark_used returns, another VerseDB instance can immediately
+    acquire the lock (i.e. the lock is not held past the method call)."""
+    backup = USED_FILE.read_text(encoding="utf-8") if USED_FILE.exists() else None
+    try:
+        db1 = _make_db_with_clean_used()
+        db1.mark_used(1)
+        # If the lock were not released, this would time out.
+        db2 = VerseDB(CSV_FILE, USED_FILE)
+        db2.mark_used(2)
+        # Both ids should be in the file.
+        db3 = VerseDB(CSV_FILE, USED_FILE)
+        assert 1 in db3.used_ids
+        assert 2 in db3.used_ids
+    finally:
+        _restore_used_backup(backup)
+        _cleanup_lock()
+
