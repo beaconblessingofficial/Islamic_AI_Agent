@@ -166,10 +166,10 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
 
 ### 2.4 — Canvas and ken-burns
 
-- [ ] **2.4.1** Implement `_build_canvas(aspect: str) -> tuple[int, int]`. Returns `(width, height)`. 9:16 → (1080, 1920). 1:1 → (1080, 1080). 16:9 → (1920, 1080).
-- [ ] **2.4.2** Implement `_apply_ken_burns(clip, duration: float) -> VideoClip`. Slow zoom 1.0× → 1.02× and 0 → 4 px diagonal pan over `duration`. Use `moviepy`'s `fl` time-varying function on a `resize` transform.
+- [x] **2.4.1** Implement `_build_canvas(aspect: str) -> tuple[int, int]`. Returns `(width, height)`. 9:16 → (1080, 1920). 1:1 → (1080, 1080). 16:9 → (1920, 1080).
+- [x] **2.4.2** Implement `_apply_ken_burns(clip, duration: float) -> VideoClip`. Slow zoom 1.0× → 1.02× and 0 → 4 px diagonal pan over `duration`. Use `moviepy`'s `fl` time-varying function on a `resize` transform.
   - verify: the resulting clip is `duration` seconds, has a slight zoom visible on every frame, and is GPU-friendly (no per-frame re-encode during the transform).
-- [ ] **2.4.3** Implement `_add_vertical_gradient_bg(canvas_size, accent_color=None) -> VideoClip`. A cream-colored background (matching the static image) with a soft vertical gradient transparent → cream at top and bottom, to fill the 420 px gap above and below the 1080×1080 plate.
+- [x] **2.4.3** Implement `_add_vertical_gradient_bg(canvas_size, accent_color=None) -> VideoClip`. A cream-colored background (matching the static image) with a soft vertical gradient transparent → cream at top and bottom, to fill the 420 px gap above and below the 1080×1080 plate.
 
 ### 2.5 — Subtitle cards
 

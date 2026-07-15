@@ -47,3 +47,31 @@ def test_make_reel_not_implemented(dummy_themes_path):
     with pytest.raises(NotImplementedError, match="Reel generation is not yet implemented"):
         gen.make_reel(verse={}, image_path="img.png", nasheed_path="audio.mp3")
 
+def test_build_canvas(dummy_themes_path):
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    assert gen._build_canvas("9:16") == (1080, 1920)
+    assert gen._build_canvas("1:1") == (1080, 1080)
+    assert gen._build_canvas("16:9") == (1920, 1080)
+    with pytest.raises(ValueError):
+        gen._build_canvas("4:3")
+
+def test_apply_ken_burns(dummy_themes_path):
+    from moviepy import ColorClip
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    # Use a dummy ColorClip in place of ImageClip for testing
+    dummy_clip = ColorClip(size=(1080, 1080), color=(255, 0, 0), duration=1.0)
+    kb_clip = gen._apply_ken_burns(dummy_clip, duration=5.0)
+    
+    # Verify the returned clip has the exact specified duration
+    assert kb_clip.duration == 5.0
+    
+def test_add_vertical_gradient_bg(dummy_themes_path):
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    # Provide a size and a custom color
+    bg_clip = gen._add_vertical_gradient_bg((1080, 1920), "#123456")
+    
+    # Should be a VideoClip (ColorClip with mask)
+    assert bg_clip.size == (1080, 1920)
+    assert bg_clip.mask is not None
+
+
