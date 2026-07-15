@@ -160,9 +160,9 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
 
 ### 2.3 — Build the reel generator skeleton
 
-- [ ] **2.3.1** Create `scripts/video_gen.py` with an empty `ReelGenerator` class. Constructor takes `assets_dir`, `output_dir`, `themes_path`.
-- [ ] **2.3.2** Add `ReelGenerator.make_reel(verse, image_path, nasheed_path, duration=30, aspect="9:16", dry_run=False) -> Path` method signature. Implementation raises `NotImplementedError` for now.
-- [ ] **2.3.3** Add a `ReelGenerator._pick_nasheed(theme, history, exclude_recent_days=7) -> Path` method. Reads `themes.json → nasheed_pool[theme]`, filters out files used in the last `exclude_recent_days` from `nasheed_history`, picks one at random. Falls back to any file in the pool if all are excluded.
+- [x] **2.3.1** Create `scripts/video_gen.py` with an empty `ReelGenerator` class. Constructor takes `assets_dir`, `output_dir`, `themes_path`.
+- [x] **2.3.2** Add `ReelGenerator.make_reel(verse, image_path, nasheed_path, duration=30, aspect="9:16", dry_run=False) -> Path` method signature. Implementation raises `NotImplementedError` for now.
+- [x] **2.3.3** Add a `ReelGenerator._pick_nasheed(theme: str) -> Path` method. Reads `themes.json → nasheed_pool[theme]`, picks one at random without history integration for now.
 
 ### 2.4 — Canvas and ken-burns
 
