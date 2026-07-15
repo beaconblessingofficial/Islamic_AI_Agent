@@ -123,13 +123,13 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
   - verify: `gen.generate_post(verse, accent_color="#3B7A57")` shows a green line under the reference.
 - [x] **1.5.3** In `scripts/make_post.py`, add `--theme T` flag. When set, pick a verse from that theme and pass `accent_color` from `themes.json`.
   - verify: `python -m scripts.make_post --theme Forgiveness` produces an image with the Forgiveness accent.
-- [ ] **1.5.4** Add `--count N` flag to `make_post.py`. Runs the pipeline N times with N distinct verses.
+- [x] **1.5.4** Add `--count N` flag to `make_post.py`. Runs the pipeline N times with N distinct verses.
   - verify: `python -m scripts.make_post --count 5` produces 5 images; no duplicate verses.
-- [ ] **1.5.5** Add `--output-name NAME` flag for deterministic filenames. Default is `post_<YYYYMMDD_HHMMSS>.png`.
+- [x] **1.5.5** Add `--output-name NAME` flag for deterministic filenames. Default is `post_<YYYYMMDD_HHMMSS>.png`.
 
 ### 1.6 — Verify Phase 1
 
-- [ ] **1.6.1** BLOCKED on 1.1-1.5. Run `python -m scripts.make_post --count 30 --theme Guidance` and confirm:
+- [ ] **1.6.1**. Run `python -m scripts.make_post --count 30 --theme Guidance` and confirm:
   - 30 images are produced in <60 s.
   - All 30 have the Guidance accent color.
   - All 30 are unique verses.

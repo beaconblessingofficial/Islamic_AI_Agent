@@ -314,3 +314,46 @@ def test_lock_released_after_operation():
         _restore_used_backup(backup)
         _cleanup_lock()
 
+# ---------------------------------------------------------------------------
+# Task A5: Selection enhancements (dry_run, exclude_ids, theme)
+# ---------------------------------------------------------------------------
+
+def test_select_random_dry_run_does_not_mutate():
+    """`select_random(dry_run=True)` returns a verse but does not add to used_ids
+    or modify the file on disk."""
+    backup = USED_FILE.read_text(encoding="utf-8") if USED_FILE.exists() else None
+    try:
+        db = _make_db_with_clean_used()
+        verse = db.select_random(dry_run=True)
+        assert verse is not None
+        assert db.used_ids == []
+        assert not USED_FILE.exists() or USED_FILE.stat().st_size == 0
+    finally:
+        _restore_used_backup(backup)
+        _cleanup_lock()
+
+def test_select_random_exclude_ids():
+    """`select_random(exclude_ids=[...])` avoids the specified IDs."""
+    backup = USED_FILE.read_text(encoding="utf-8") if USED_FILE.exists() else None
+    try:
+        db = _make_db_with_clean_used()
+        all_ids = list(db.verses.keys())
+        target_id = all_ids[0]
+        exclude = all_ids[1:]
+        verse = db.select_random(exclude_ids=exclude)
+        assert int(verse["id"]) == target_id
+    finally:
+        _restore_used_backup(backup)
+        _cleanup_lock()
+
+def test_select_random_with_theme():
+    """`select_random(theme=...)` returns a verse of the correct theme."""
+    backup = USED_FILE.read_text(encoding="utf-8") if USED_FILE.exists() else None
+    try:
+        db = _make_db_with_clean_used()
+        verse = db.select_random(theme="Forgiveness")
+        assert verse is not None
+        assert verse["theme"].lower() == "forgiveness"
+    finally:
+        _restore_used_backup(backup)
+        _cleanup_lock()

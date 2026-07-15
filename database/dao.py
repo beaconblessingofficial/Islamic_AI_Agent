@@ -249,32 +249,61 @@ class VerseDB:
 
     # ----- public: selection -----
 
-    def select_random(self) -> Dict[str, str]:
+    def select_random(
+        self,
+        theme: Optional[str] = None,
+        dry_run: bool = False,
+        exclude_ids: Optional[List[int]] = None
+    ) -> Dict[str, str]:
         # Hold the lock for the entire read-pick-mark-write cycle so that
         # two concurrent processes cannot select the same verse.
         with _file_lock(self._lock_path):
             self._load_used()
-            unused = self._get_unused_ids()
-            if not unused:
-                self.used_ids = []
-                self._persist_used()
-                unused = self._get_unused_ids()
 
-            while unused:
-                vid = random.choice(unused)
+            def get_candidates() -> List[int]:
+                unused = self._get_unused_ids()
+                if exclude_ids:
+                    unused = [u for u in unused if u not in exclude_ids]
+                if theme:
+                    t_lower = theme.lower()
+                    unused = [u for u in unused if self.verses[u].get("theme", "").lower() == t_lower]
+                return unused
+
+            candidates = get_candidates()
+            
+            if not candidates:
+                if not dry_run:
+                    self.used_ids = []
+                    self._persist_used()
+                
+                candidates = get_candidates()
+                # If STILL no candidates (e.g. dry_run=True simulating reset)
+                if not candidates and dry_run:
+                    all_ids = list(self.verses.keys())
+                    if exclude_ids:
+                        all_ids = [u for u in all_ids if u not in exclude_ids]
+                    if theme:
+                        t_lower = theme.lower()
+                        all_ids = [u for u in all_ids if self.verses.get(u, {}).get("theme", "").lower() == t_lower]
+                    candidates = all_ids
+
+            while candidates:
+                vid = random.choice(candidates)
                 verse = self.verses.get(vid)
                 if verse and self.validate_verse(verse):
+                    if not dry_run:
+                        if vid not in self.used_ids:
+                            self.used_ids.append(vid)
+                            self._persist_used()
+                    return verse
+                # invalid verse -> mark used to avoid infinite loop
+                if not dry_run:
                     if vid not in self.used_ids:
                         self.used_ids.append(vid)
                         self._persist_used()
-                    return verse
-                # invalid verse -> mark used to avoid infinite loop
-                if vid not in self.used_ids:
-                    self.used_ids.append(vid)
-                    self._persist_used()
-                unused = self._get_unused_ids()
+                candidates.remove(vid)
 
-            raise RuntimeError("No valid verses available")
+            raise RuntimeError(f"No valid verses available (theme={theme})")
 
     def select_by_id(self, vid: int) -> Optional[Dict[str, str]]:
         return self.verses.get(int(vid))

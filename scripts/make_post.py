@@ -86,6 +86,7 @@ def run(
     theme_db = ThemeDB(config.THEMES_PATH)
 
     paths: list[Path] = []
+    session_used_ids: set[int] = set()
 
     for i in range(count):
         # --- Select verse -----------------------------------------------
@@ -97,30 +98,17 @@ def run(
                     file=sys.stderr,
                 )
                 sys.exit(1)
-        elif theme:
-            unused_ids = db.list_unused(theme=theme)
-            if not unused_ids:
-                # All theme verses used – soft reset limited to this theme by
-                # clearing the full ledger (the broader reset guard; acceptable
-                # at Phase 0 scale).
-                print(
-                    f"[WARNING] All verses for theme '{theme}' already used. "
-                    "Resetting used-verse ledger.",
-                    file=sys.stderr,
-                )
-                db.reset_used()
-                unused_ids = db.list_unused(theme=theme)
-            if not unused_ids:
-                print(
-                    f"[ERROR] No verses found for theme '{theme}'.",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-            import random
-            vid = random.choice(unused_ids)
-            verse = db.select_by_id(vid)
         else:
-            verse = db.select_random()
+            try:
+                verse = db.select_random(
+                    theme=theme,
+                    dry_run=dry_run,
+                    exclude_ids=list(session_used_ids)
+                )
+                session_used_ids.add(int(verse["id"]))
+            except RuntimeError as e:
+                print(f"[ERROR] {e}", file=sys.stderr)
+                sys.exit(1)
 
         # --- Generate image ---------------------------------------------
         name = _build_output_name(output_name, i, count)
@@ -139,12 +127,6 @@ def run(
             f"[{i + 1}/{count}] Generated: {path}  "
             f"(id={verse['id']} {verse['surah']} {verse['ayah']})"
         )
-
-        # --- Mark used --------------------------------------------------
-        if not dry_run and verse_id is None:
-            # verse_id runs are never bulk-marked as used (they are explicit
-            # one-off renders, not "next in rotation").
-            db.mark_used(int(verse["id"]))
 
     return paths
 
