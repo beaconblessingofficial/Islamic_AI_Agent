@@ -184,13 +184,13 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
   - Translation: starts at 6.1 s, holds 3.0 s, fades 0.3 s.
   - Reference: starts at `duration - 1.5`, holds 1.5 s, fades 0.3 s.
   - verify: timing sums ≤ `duration`; no overlap between cards (except reference which may overlap the tail of translation by 0.5 s).
-- [ ] **2.5.6** Implement `_compose_cards(cards, canvas_size, background) -> VideoClip`. Layers all four cards on top of the ken-burns background. Logo and separator are persistent across the full duration.
+- [x] **2.5.6** Implement `_compose_cards(cards, canvas_size, background) -> VideoClip`. Layers all four cards on top of the ken-burns background. Logo and separator are persistent across the full duration.
 
 ### 2.6 — Audio
 
-- [ ] **2.6.1** Implement `_attach_audio(clip, nasheed_path, duration) -> VideoClip`. Load the MP3, loop or trim to `duration`, apply 0.5 s fade in + 0.5 s fade out.
+- [x] **2.6.1** Implement `_attach_audio(clip, nasheed_path, duration) -> VideoClip`. Load the MP3, loop or trim to `duration`, apply 0.5 s fade in + 0.5 s fade out.
   - verify: the audio is exactly `duration` seconds; no clipping at the seams when looping.
-- [ ] **2.6.2** Implement `_normalize_audio(clip, target_lufs=-16) -> VideoClip`. Use `moviepy.audio.fx.all.audio_normalize` followed by a `volumex` adjustment. Cap at -3 dBFS peak to avoid clipping.
+- [x] **2.6.2** Implement `_normalize_audio(clip, target_lufs=-16) -> VideoClip`. Use `moviepy.audio.fx.all.audio_normalize` followed by a `volumex` adjustment. Cap at -3 dBFS peak to avoid clipping.
   - verify: a peak-volume MP3 in the input does not produce clipping in the output.
 
 ### 2.7 — Export

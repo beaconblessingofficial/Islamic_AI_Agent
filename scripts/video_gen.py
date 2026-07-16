@@ -210,6 +210,58 @@ class ReelGenerator:
             ("reference", max(0.0, duration - 1.5), duration)
         ]
 
+    def _compose_cards(self, cards: list[Tuple[VideoClip, float, float]], canvas_size: Tuple[int, int], background: VideoClip) -> VideoClip:
+        """
+        Layers all cards on top of the background.
+        `cards` is a list of (clip, start_sec, end_sec).
+        """
+        from moviepy import CompositeVideoClip
+        
+        timed_cards = []
+        for clip, start_sec, end_sec in cards:
+            c = clip.with_start(start_sec).with_end(end_sec)
+            timed_cards.append(c)
+            
+        return CompositeVideoClip([background] + timed_cards, size=canvas_size)
+
+    def _attach_audio(self, clip: VideoClip, nasheed_path: Path | str, duration: float) -> VideoClip:
+        """
+        Load MP3, loop or trim to duration, apply 0.5s fade in/out.
+        """
+        from moviepy import AudioFileClip
+        import moviepy.audio.fx as afx
+        
+        audio = AudioFileClip(str(nasheed_path))
+        
+        # Loop if too short
+        if audio.duration is not None and audio.duration < duration:
+            audio = audio.with_effects([afx.AudioLoop(duration=duration)])
+            
+        # Trim to exact duration
+        audio = audio.with_duration(duration)
+        
+        # Apply fades
+        audio = audio.with_effects([afx.AudioFadeIn(0.5), afx.AudioFadeOut(0.5)])
+        
+        return clip.with_audio(audio)
+
+    def _normalize_audio(self, clip: VideoClip, target_lufs: float = -16.0) -> VideoClip:
+        """
+        Normalize audio peak, then reduce to avoid clipping.
+        Caps at -3 dBFS.
+        """
+        import moviepy.audio.fx as afx
+        
+        if clip.audio is None:
+            return clip
+            
+        audio = clip.audio.with_effects([afx.AudioNormalize()])
+        
+        # Peak at -3 dBFS = 10^(-3/20) ~ 0.707
+        audio = audio.with_effects([afx.MultiplyVolume(0.707)])
+        
+        return clip.with_audio(audio)
+
     def make_reel(self, verse: Dict[str, Any], image_path: Path | str, nasheed_path: Path | str, duration: float = 30.0, aspect: str = "9:16", dry_run: bool = False) -> Path:
         """
         Generate a video reel for the given verse and audio.

@@ -103,3 +103,37 @@ def test_render_arabic_card(dummy_themes_path):
     
     # FadeOut effect should be applied in clip.effects or functionally wrapped.
     # At minimum, MoviePy should not throw errors during instantiation.
+
+def test_compose_cards(dummy_themes_path):
+    from moviepy import ColorClip
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    bg = ColorClip((100, 100), color=(0,0,0), duration=10)
+    
+    c1 = ColorClip((50, 50), color=(255,0,0), duration=2)
+    c2 = ColorClip((50, 50), color=(0,255,0), duration=2)
+    
+    cards = [
+        (c1, 0.0, 2.0),
+        (c2, 2.0, 4.0)
+    ]
+    
+    comp = gen._compose_cards(cards, (100, 100), bg)
+    
+    assert comp.duration == 10.0
+    assert comp.size == (100, 100)
+    
+def test_normalize_audio(dummy_themes_path):
+    from moviepy import ColorClip
+    from moviepy import AudioArrayClip
+    import numpy as np
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    
+    # Create a 1-second audio array (44100 Hz)
+    audio_arr = np.random.uniform(-1, 1, (44100, 2))
+    audio_clip = AudioArrayClip(audio_arr, fps=44100)
+    
+    video = ColorClip((100, 100), color=(0,0,0), duration=1)
+    video = video.with_audio(audio_clip)
+    
+    norm_video = gen._normalize_audio(video)
+    assert norm_video.audio is not None
