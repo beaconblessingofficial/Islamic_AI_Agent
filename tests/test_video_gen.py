@@ -40,12 +40,42 @@ def test_pick_nasheed_empty_pool(dummy_themes_path):
     with pytest.raises(ValueError, match="has no nasheeds in its pool"):
         gen._pick_nasheed("MissingPool")
 
-def test_make_reel_not_implemented(dummy_themes_path):
-    """Test that make_reel raises NotImplementedError."""
-    gen = ReelGenerator(assets_dir="/mock/assets", output_dir="/mock/out", themes_path=dummy_themes_path)
+def test_make_reel_dry_run(dummy_themes_path, tmp_path):
+    from unittest.mock import patch, MagicMock
+    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path)
     
-    with pytest.raises(NotImplementedError, match="Reel generation is not yet implemented"):
-        gen.make_reel(verse={}, image_path="img.png", nasheed_path="audio.mp3")
+    with patch("scripts.video_gen.ImageClip") as mock_imageclip, \
+         patch.object(gen, "_build_canvas", return_value=(1080, 1920)) as mock_canvas, \
+         patch.object(gen, "_apply_ken_burns") as mock_kb, \
+         patch.object(gen, "_add_vertical_gradient_bg") as mock_grad, \
+         patch("scripts.video_gen.CompositeVideoClip") as mock_comp_bg, \
+         patch.object(gen, "_time_subtitles", return_value=[]) as mock_time, \
+         patch.object(gen, "_compose_cards") as mock_compose, \
+         patch.object(gen, "_attach_audio") as mock_audio, \
+         patch.object(gen, "_normalize_audio") as mock_norm, \
+         patch.object(gen, "_export", return_value=Path("out.mp4")) as mock_export, \
+         patch("PIL.Image.open") as mock_img_open:
+        
+        # Setup mock image to prevent ImageClip crash
+        mock_img_open.return_value.convert.return_value = MagicMock()
+
+        verse = {"id": 123}
+        out = gen.make_reel(verse, "dummy.png", "dummy.mp3", duration=10.0, aspect="9:16", dry_run=True)
+        
+        # Verify orchestration
+        mock_canvas.assert_called_once_with("9:16")
+        mock_kb.assert_called_once()
+        mock_grad.assert_called_once()
+        mock_comp_bg.assert_called_once()
+        mock_time.assert_called_once_with(verse, 10.0)
+        mock_compose.assert_called_once()
+        mock_audio.assert_called_once()
+        mock_norm.assert_called_once()
+        
+        # Verify dry_run routing
+        export_path = mock_export.call_args[0][1]
+        assert "pending" in export_path.parts
+        assert export_path.name == "reel_123.mp4"
 
 def test_build_canvas(dummy_themes_path):
     gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)

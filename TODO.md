@@ -195,9 +195,9 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
 
 ### 2.7 — Export
 
-- [ ] **2.7.1** Implement `_export(clip, output_path) -> Path`. H.264, yuv420p, `preset=medium`, `bitrate="5000k"`, `audio_bitrate="192k"`, `ffmpeg_params=["-movflags", "+faststart"]`. File size target: ≤ 30 MB for 30 s.
+- [x] **2.7.1** Implement `_export(clip, output_path) -> Path`. H.264, yuv420p, `preset=medium`, `bitrate="5000k"`, `audio_bitrate="192k"`, `ffmpeg_params=["-movflags", "+faststart"]`. File size target: ≤ 30 MB for 30 s.
   - verify: `ffprobe output_path` shows H.264, yuv420p, faststart; file size is ≤ 30 MB for 30 s.
-- [ ] **2.7.2** Wire `make_reel` to call the full pipeline: build canvas → apply ken-burns → compose cards → attach audio → export.
+- [x] **2.7.2** Wire `make_reel` to call the full pipeline: build canvas → apply ken-burns → compose cards → attach audio → export.
   - verify: a 30 s reel for verse id 1 is produced in <60 s and plays cleanly in VLC.
 
 ### 2.8 — Entry point and CLI

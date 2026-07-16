@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 import arabic_reshaper
 from bidi.algorithm import get_display
 import moviepy.video.fx as vfx
-from moviepy import VideoClip, ImageClip, ColorClip
+from moviepy import VideoClip, ImageClip, ColorClip, CompositeVideoClip
 import numpy as np
 from scripts.config import config
 
@@ -215,8 +215,6 @@ class ReelGenerator:
         Layers all cards on top of the background.
         `cards` is a list of (clip, start_sec, end_sec).
         """
-        from moviepy import CompositeVideoClip
-        
         timed_cards = []
         for clip, start_sec, end_sec in cards:
             c = clip.with_start(start_sec).with_end(end_sec)
@@ -262,11 +260,75 @@ class ReelGenerator:
         
         return clip.with_audio(audio)
 
+    def _export(self, clip: VideoClip, output_path: Path) -> Path:
+        """
+        Export clip to MP4 format with specified parameters.
+        H.264, yuv420p, preset=medium, bitrate=5000k, audio_bitrate=192k, faststart.
+        """
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        clip.write_videofile(
+            str(output_path),
+            fps=30,
+            codec="libx264",
+            audio_codec="aac",
+            preset="medium",
+            bitrate="5000k",
+            audio_bitrate="192k",
+            ffmpeg_params=["-pix_fmt", "yuv420p", "-movflags", "+faststart"],
+            logger=None # Disable progress bar logs if needed
+        )
+        return output_path
+
     def make_reel(self, verse: Dict[str, Any], image_path: Path | str, nasheed_path: Path | str, duration: float = 30.0, aspect: str = "9:16", dry_run: bool = False) -> Path:
         """
         Generate a video reel for the given verse and audio.
         """
-        raise NotImplementedError("Reel generation is not yet implemented.")
+        from PIL import ImageFont
+        
+        # Determine output location
+        if dry_run:
+            out_path = self.output_dir / "pending" / f"reel_{verse.get('id', 'temp')}.mp4"
+        else:
+            out_path = self.output_dir / "reels" / f"reel_{verse.get('id', 'temp')}.mp4"
+            
+        # 1. Canvas & Background
+        canvas_size = self._build_canvas(aspect)
+        bg_clip = ImageClip(np.array(Image.open(image_path).convert("RGB")))
+        bg_clip = self._apply_ken_burns(bg_clip, duration)
+        
+        # Apply vertical gradient
+        gradient_clip = self._add_vertical_gradient_bg(canvas_size, config.BG_COLOR)
+        combined_bg = CompositeVideoClip([bg_clip, gradient_clip], size=canvas_size)
+        
+        # 2. Render Cards
+        font = ImageFont.load_default() # Fallback, could load from assets later
+        cards = []
+        timings = self._time_subtitles(verse, duration)
+        
+        for card_type, start_sec, end_sec in timings:
+            card_dur = end_sec - start_sec
+            if card_type == "arabic":
+                c = self._render_arabic_card(verse, font, card_dur)
+            elif card_type == "transliteration":
+                c = self._render_translit_card(verse, font, card_dur)
+            elif card_type == "translation":
+                c = self._render_translation_card(verse, font, card_dur)
+            elif card_type == "reference":
+                c = self._render_reference_card(verse, font, card_dur)
+            else:
+                continue
+                
+            cards.append((c, start_sec, end_sec))
+            
+        # 3. Compose
+        video = self._compose_cards(cards, canvas_size, combined_bg)
+        
+        # 4. Audio
+        video = self._attach_audio(video, nasheed_path, duration)
+        video = self._normalize_audio(video)
+        
+        # 5. Export
+        return self._export(video, out_path)
 
     def _pick_nasheed(self, theme: str) -> Path:
         """
