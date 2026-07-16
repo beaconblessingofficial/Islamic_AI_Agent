@@ -173,12 +173,12 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
 
 ### 2.5 — Subtitle cards
 
-- [ ] **2.5.1** Implement `_render_arabic_card(verse, font, duration) -> ImageClip`. Pre-render a transparent PNG of the reshaped+bidi'd Arabic text. Wrap to canvas width. Return an `ImageClip` of `duration` seconds.
+- [x] **2.5.1** Implement `_render_arabic_card(verse, font, duration) -> ImageClip`. Pre-render a transparent PNG of the reshaped+bidi'd Arabic text. Wrap to canvas width. Return an `ImageClip` of `duration` seconds.
   - verify: the PNG has no boxes; text is right-aligned and properly shaped.
-- [ ] **2.5.2** Implement `_render_translit_card(verse, font, duration) -> ImageClip`. Same pattern for the transliteration.
-- [ ] **2.5.3** Implement `_render_translation_card(verse, font, duration) -> ImageClip`. Same for the translation.
-- [ ] **2.5.4** Implement `_render_reference_card(verse, font, duration) -> ImageClip`. The "Al-Baqarah 2:286" card.
-- [ ] **2.5.5** Implement `_time_subtitles(verse) -> list[(card, start_sec, end_sec)]`. Beat math:
+- [x] **2.5.2** Implement `_render_translit_card(verse, font, duration) -> ImageClip`. Same pattern for the transliteration.
+- [x] **2.5.3** Implement `_render_translation_card(verse, font, duration) -> ImageClip`. Same for the translation.
+- [x] **2.5.4** Implement `_render_reference_card(verse, font, duration) -> ImageClip`. The "Al-Baqarah 2:286" card.
+- [x] **2.5.5** Implement `_time_subtitles(verse) -> list[(card, start_sec, end_sec)]`. Beat math:
   - Arabic: appears at 0.0 s, holds for 3.0 s, fades 0.3 s.
   - Translit: starts at 3.3 s, holds 2.5 s, fades 0.3 s.
   - Translation: starts at 6.1 s, holds 3.0 s, fades 0.3 s.
