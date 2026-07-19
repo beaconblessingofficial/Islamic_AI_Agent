@@ -14,9 +14,10 @@ from database.dao import ThemeDB
 class ReelGenerator:
     """Generates MP4 reels from generated images and audio."""
 
-    def __init__(self, assets_dir: Path | str, output_dir: Path | str, themes_path: Path | str):
+    def __init__(self, assets_dir: Path | str, output_dir: Path | str, themes_path: Path | str, nasheeds_dir: Path | str = "nasheeds"):
         self.assets_dir = Path(assets_dir)
         self.output_dir = Path(output_dir)
+        self.nasheeds_dir = Path(nasheeds_dir)
         self.theme_db = ThemeDB(themes_path)
 
     def _build_canvas(self, aspect: str) -> Tuple[int, int]:
@@ -50,7 +51,7 @@ class ReelGenerator:
             
         return clip.resized(get_scale).with_position(get_pos)
 
-    def _add_vertical_gradient_bg(self, canvas_size: Tuple[int, int], accent_color: str | None = None) -> VideoClip:
+    def _add_vertical_gradient_bg(self, canvas_size: Tuple[int, int], accent_color: str | tuple | None = None) -> VideoClip:
         """
         Generate a gradient background VideoClip for 9:16 to fill the empty top/bottom.
         """
@@ -59,9 +60,14 @@ class ReelGenerator:
         if accent_color is None:
             accent_color = "#FDFBF7" # Cream color from Phase 1
             
-        # Convert hex to RGB tuple
-        accent_color = accent_color.lstrip('#')
-        rgb = tuple(int(accent_color[i:i+2], 16) for i in (0, 2, 4))
+        if isinstance(accent_color, tuple):
+            rgb = accent_color
+        elif isinstance(accent_color, str):
+            # Convert hex to RGB tuple
+            accent_color = accent_color.lstrip('#')
+            rgb = tuple(int(accent_color[i:i+2], 16) for i in (0, 2, 4))
+        else:
+            raise TypeError(f"accent_color must be a hex string or RGB tuple, got {type(accent_color).__name__}")
         
         # Create a base color clip
         bg_clip = ColorClip(size=(width, height), color=rgb)
@@ -222,14 +228,17 @@ class ReelGenerator:
             
         return CompositeVideoClip([background] + timed_cards, size=canvas_size)
 
-    def _attach_audio(self, clip: VideoClip, nasheed_path: Path | str, duration: float) -> VideoClip:
+    def _attach_audio(self, clip: VideoClip, nasheed_path: Path, duration: float, open_clips: list) -> VideoClip:
         """
-        Load MP3, loop or trim to duration, apply 0.5s fade in/out.
+        Loads the nasheed, loops if needed, trims, applies fades,
+        and sets it as the audio of the given clip.
+        Tracks the base AudioFileClip so it can be explicitly closed.
         """
         from moviepy import AudioFileClip
         import moviepy.audio.fx as afx
         
         audio = AudioFileClip(str(nasheed_path))
+        open_clips.append(audio)
         
         # Loop if too short
         if audio.duration is not None and audio.duration < duration:
@@ -275,8 +284,18 @@ class ReelGenerator:
             bitrate="5000k",
             audio_bitrate="192k",
             ffmpeg_params=["-pix_fmt", "yuv420p", "-movflags", "+faststart"],
-            logger=None # Disable progress bar logs if needed
+            logger=None, # Disable progress bar logs if needed
+            remove_temp=False # Bypass internal moviepy deletion due to Windows handle bug
         )
+        
+        # Manually cleanup the temp audio file created by MoviePy
+        temp_audio = output_path.with_name(output_path.name[:-4] + "TEMP_MPY_wvf_snd.mp4")
+        if temp_audio.exists():
+            try:
+                temp_audio.unlink()
+            except PermissionError:
+                pass # Safe to ignore; the lock will release eventually
+                
         return output_path
 
     def make_reel(self, verse: Dict[str, Any], image_path: Path | str, nasheed_path: Path | str, duration: float = 30.0, aspect: str = "9:16", dry_run: bool = False) -> Path:
@@ -291,44 +310,56 @@ class ReelGenerator:
         else:
             out_path = self.output_dir / "reels" / f"reel_{verse.get('id', 'temp')}.mp4"
             
-        # 1. Canvas & Background
-        canvas_size = self._build_canvas(aspect)
-        bg_clip = ImageClip(np.array(Image.open(image_path).convert("RGB")))
-        bg_clip = self._apply_ken_burns(bg_clip, duration)
-        
-        # Apply vertical gradient
-        gradient_clip = self._add_vertical_gradient_bg(canvas_size, config.BG_COLOR)
-        combined_bg = CompositeVideoClip([bg_clip, gradient_clip], size=canvas_size)
-        
-        # 2. Render Cards
-        font = ImageFont.load_default() # Fallback, could load from assets later
-        cards = []
-        timings = self._time_subtitles(verse, duration)
-        
-        for card_type, start_sec, end_sec in timings:
-            card_dur = end_sec - start_sec
-            if card_type == "arabic":
-                c = self._render_arabic_card(verse, font, card_dur)
-            elif card_type == "transliteration":
-                c = self._render_translit_card(verse, font, card_dur)
-            elif card_type == "translation":
-                c = self._render_translation_card(verse, font, card_dur)
-            elif card_type == "reference":
-                c = self._render_reference_card(verse, font, card_dur)
-            else:
-                continue
-                
-            cards.append((c, start_sec, end_sec))
+        open_clips = []
+        try:
+            # 1. Canvas & Background
+            canvas_size = self._build_canvas(aspect)
+            base_img = ImageClip(np.array(Image.open(image_path).convert("RGB")))
+            open_clips.append(base_img)
             
-        # 3. Compose
-        video = self._compose_cards(cards, canvas_size, combined_bg)
-        
-        # 4. Audio
-        video = self._attach_audio(video, nasheed_path, duration)
-        video = self._normalize_audio(video)
-        
-        # 5. Export
-        return self._export(video, out_path)
+            bg_clip = self._apply_ken_burns(base_img, duration)
+            
+            # Apply vertical gradient
+            gradient_clip = self._add_vertical_gradient_bg(canvas_size, config.BG_COLOR)
+            combined_bg = CompositeVideoClip([bg_clip, gradient_clip], size=canvas_size)
+            
+            # 2. Render Cards
+            font = ImageFont.load_default() # Fallback, could load from assets later
+            cards = []
+            timings = self._time_subtitles(verse, duration)
+            
+            for card_type, start_sec, end_sec in timings:
+                card_dur = end_sec - start_sec
+                if card_type == "arabic":
+                    c = self._render_arabic_card(verse, font, card_dur)
+                elif card_type == "transliteration":
+                    c = self._render_translit_card(verse, font, card_dur)
+                elif card_type == "translation":
+                    c = self._render_translation_card(verse, font, card_dur)
+                elif card_type == "reference":
+                    c = self._render_reference_card(verse, font, card_dur)
+                else:
+                    continue
+                    
+                cards.append((c, start_sec, end_sec))
+                
+            # 3. Compose
+            video = self._compose_cards(cards, canvas_size, combined_bg)
+            
+            # 4. Audio
+            video = self._attach_audio(video, nasheed_path, duration, open_clips)
+            video = self._normalize_audio(video)
+            video = video.with_duration(duration)
+            
+            # 5. Export
+            return self._export(video, out_path)
+        finally:
+            # Safely close all explicitly tracked base clips
+            for clip in open_clips:
+                try:
+                    clip.close()
+                except Exception:
+                    pass
 
     def _pick_nasheed(self, theme: str) -> Path:
         """
@@ -342,4 +373,4 @@ class ReelGenerator:
             raise ValueError(f"Theme '{theme}' has no nasheeds in its pool.")
             
         selected = random.choice(pool)
-        return self.assets_dir / selected
+        return self.nasheeds_dir / selected

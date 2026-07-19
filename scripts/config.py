@@ -3,7 +3,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Base paths
-from scripts.paths import BASE_DIR, OUTPUT, DATABASE, TEMPLATES, FONTS
+from scripts.paths import BASE_DIR, OUTPUT, DATABASE, TEMPLATES, FONTS, NASHEEDS
 
 # Load overrides if .env exists
 load_dotenv(BASE_DIR / ".env")
@@ -23,6 +23,7 @@ class Config:
     ASSETS_DIR = Path(os.getenv("ASSETS_DIR", TEMPLATES))
     OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", OUTPUT))
     FONTS_DIR = Path(os.getenv("FONTS_DIR", FONTS))
+    NASHEEDS_DIR = Path(os.getenv("NASHEEDS_DIR", NASHEEDS))
 
     # -----------------------------
     # Rendering - Dimensions

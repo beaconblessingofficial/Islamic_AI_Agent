@@ -24,15 +24,15 @@ def dummy_themes_path(tmp_path):
 
 def test_pick_nasheed_success(dummy_themes_path):
     """Test that a nasheed is picked successfully from the pool."""
-    gen = ReelGenerator(assets_dir="/mock/assets", output_dir="/mock/out", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock/assets", output_dir="/mock/out", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     picked = gen._pick_nasheed("Guidance")
     assert isinstance(picked, Path)
-    # The picked path should be relative to assets_dir
-    assert str(picked) in [str(Path("/mock/assets/audio/track1.mp3")), str(Path("/mock/assets/audio/track2.mp3"))]
+    # The picked path should be relative to nasheeds_dir
+    assert str(picked) in [str(Path("/mock/audio/track1.mp3")), str(Path("/mock/audio/track2.mp3"))]
 
 def test_pick_nasheed_empty_pool(dummy_themes_path):
     """Test that picking a nasheed raises ValueError if pool is empty."""
-    gen = ReelGenerator(assets_dir="/mock/assets", output_dir="/mock/out", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock/assets", output_dir="/mock/out", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     
     with pytest.raises(ValueError, match="has no nasheeds in its pool"):
         gen._pick_nasheed("EmptyTheme")
@@ -42,7 +42,7 @@ def test_pick_nasheed_empty_pool(dummy_themes_path):
 
 def test_make_reel_dry_run(dummy_themes_path, tmp_path):
     from unittest.mock import patch, MagicMock
-    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path, nasheeds_dir="/mock")
     
     with patch("scripts.video_gen.ImageClip") as mock_imageclip, \
          patch.object(gen, "_build_canvas", return_value=(1080, 1920)) as mock_canvas, \
@@ -78,7 +78,7 @@ def test_make_reel_dry_run(dummy_themes_path, tmp_path):
         assert export_path.name == "reel_123.mp4"
 
 def test_build_canvas(dummy_themes_path):
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     assert gen._build_canvas("9:16") == (1080, 1920)
     assert gen._build_canvas("1:1") == (1080, 1080)
     assert gen._build_canvas("16:9") == (1920, 1080)
@@ -87,7 +87,7 @@ def test_build_canvas(dummy_themes_path):
 
 def test_apply_ken_burns(dummy_themes_path):
     from moviepy import ColorClip
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     # Use a dummy ColorClip in place of ImageClip for testing
     dummy_clip = ColorClip(size=(1080, 1080), color=(255, 0, 0), duration=1.0)
     kb_clip = gen._apply_ken_burns(dummy_clip, duration=5.0)
@@ -96,15 +96,26 @@ def test_apply_ken_burns(dummy_themes_path):
     assert kb_clip.duration == 5.0
     
 def test_add_vertical_gradient_bg(dummy_themes_path):
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
-    # Provide a size and a custom color
-    bg_clip = gen._add_vertical_gradient_bg((1080, 1920), "#123456")
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     
-    # Should be a VideoClip (ColorClip with mask)
-    assert bg_clip.mask is not None
+    # Test 1: Hex string
+    bg_clip1 = gen._add_vertical_gradient_bg((1080, 1920), "#123456")
+    assert bg_clip1.mask is not None
+    
+    # Test 2: Hex string without hash
+    bg_clip2 = gen._add_vertical_gradient_bg((1080, 1920), "123456")
+    assert bg_clip2.mask is not None
+    
+    # Test 3: RGB Tuple
+    bg_clip3 = gen._add_vertical_gradient_bg((1080, 1920), (255, 128, 0))
+    assert bg_clip3.mask is not None
+    
+    # Test 4: Invalid input
+    with pytest.raises(TypeError, match="accent_color must be a hex string or RGB tuple"):
+        gen._add_vertical_gradient_bg((1080, 1920), 12345)
 
 def test_time_subtitles(dummy_themes_path):
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     timings = gen._time_subtitles({}, duration=15.0)
     
     assert len(timings) == 4
@@ -119,7 +130,7 @@ def test_time_subtitles(dummy_themes_path):
 
 def test_render_arabic_card(dummy_themes_path):
     from PIL import ImageFont
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     verse = {"arabic": "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ"}
     font = ImageFont.load_default()
     
@@ -136,7 +147,7 @@ def test_render_arabic_card(dummy_themes_path):
 
 def test_compose_cards(dummy_themes_path):
     from moviepy import ColorClip
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     bg = ColorClip((100, 100), color=(0,0,0), duration=10)
     
     c1 = ColorClip((50, 50), color=(255,0,0), duration=2)
@@ -156,7 +167,7 @@ def test_normalize_audio(dummy_themes_path):
     from moviepy import ColorClip
     from moviepy import AudioArrayClip
     import numpy as np
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     
     # Create a 1-second audio array (44100 Hz)
     audio_arr = np.random.uniform(-1, 1, (44100, 2))
@@ -173,7 +184,7 @@ def test_normalize_audio(dummy_themes_path):
 def test_make_reel_produces_mp4(dummy_themes_path, tmp_path):
     """Verifies MoviePy export is configured to use H.264, yuv420p, and faststart."""
     from unittest.mock import patch, MagicMock
-    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path, nasheeds_dir="/mock")
     
     with patch("scripts.video_gen.ImageClip"), \
          patch.object(gen, "_build_canvas", return_value=(1080, 1920)), \
@@ -189,6 +200,7 @@ def test_make_reel_produces_mp4(dummy_themes_path, tmp_path):
         mock_img_open.return_value.convert.return_value = MagicMock()
         mock_video = MagicMock()
         mock_norm.return_value = mock_video
+        mock_video.with_duration.return_value = mock_video
         
         out = gen.make_reel({"id": 123}, "dummy.png", "dummy.mp3", duration=30.0, aspect="9:16", dry_run=False)
         
@@ -201,18 +213,18 @@ def test_make_reel_produces_mp4(dummy_themes_path, tmp_path):
 
 def test_aspect_9_16(dummy_themes_path):
     """dimensions are 1080x1920."""
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     assert gen._build_canvas("9:16") == (1080, 1920)
 
 def test_aspect_1_1(dummy_themes_path):
     """dimensions are 1080x1080."""
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     assert gen._build_canvas("1:1") == (1080, 1080)
 
 def test_file_size_under_30mb_for_30s(dummy_themes_path, tmp_path):
     """Verifies export bitrate configuration is consistent with the target file size."""
     from unittest.mock import patch, MagicMock
-    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path, nasheeds_dir="/mock")
     
     with patch("scripts.video_gen.ImageClip"), \
          patch.object(gen, "_build_canvas", return_value=(1080, 1920)), \
@@ -228,6 +240,7 @@ def test_file_size_under_30mb_for_30s(dummy_themes_path, tmp_path):
         mock_img_open.return_value.convert.return_value = MagicMock()
         mock_video = MagicMock()
         mock_norm.return_value = mock_video
+        mock_video.with_duration.return_value = mock_video
         
         out = gen.make_reel({"id": 123}, "dummy.png", "dummy.mp3", duration=30.0, aspect="9:16", dry_run=False)
         
@@ -237,14 +250,14 @@ def test_file_size_under_30mb_for_30s(dummy_themes_path, tmp_path):
 
 def test_nasheed_picked_from_theme(dummy_themes_path):
     """nasheed is in the theme's pool."""
-    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path, nasheeds_dir="/mock")
     picked = gen._pick_nasheed("Guidance")
     assert picked.name in ["track1.mp3", "track2.mp3"]
 
 def test_dry_run_writes_to_pending(dummy_themes_path, tmp_path):
     """output path is under output/pending/."""
     from unittest.mock import patch, MagicMock
-    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path)
+    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path, nasheeds_dir="/mock")
     
     with patch("scripts.video_gen.ImageClip"), \
          patch.object(gen, "_build_canvas", return_value=(1080, 1920)), \
@@ -260,6 +273,7 @@ def test_dry_run_writes_to_pending(dummy_themes_path, tmp_path):
         mock_img_open.return_value.convert.return_value = MagicMock()
         mock_video = MagicMock()
         mock_norm.return_value = mock_video
+        mock_video.with_duration.return_value = mock_video
         
         out_path = gen.make_reel({"id": 123}, "dummy.png", "dummy.mp3", duration=10.0, aspect="9:16", dry_run=True)
         assert "pending" in out_path.parts

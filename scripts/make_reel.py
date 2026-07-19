@@ -49,7 +49,8 @@ def main():
     gen = ReelGenerator(
         assets_dir=config.ASSETS_DIR,
         output_dir=config.OUTPUT_DIR,
-        themes_path=config.THEMES_PATH
+        themes_path=config.THEMES_PATH,
+        nasheeds_dir=config.NASHEEDS_DIR
     )
 
     # Select Nasheed
