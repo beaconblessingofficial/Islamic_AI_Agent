@@ -209,13 +209,13 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
 ### 2.9 — Tests
 
 - [ ] **2.9.1** Create `tests/test_video_gen.py` with smoke tests:
-  - `test_make_reel_produces_mp4`: produces a file, ffprobe confirms H.264.
-  - `test_aspect_9_16`: dimensions are 1080×1920.
-  - `test_aspect_1_1`: dimensions are 1080×1080.
-  - `test_file_size_under_30mb_for_30s`: file size ≤ 30 MB.
-  - `test_nasheed_picked_from_theme`: nasheed is in the theme's pool.
-  - `test_dry_run_writes_to_pending`: output path is under `output/pending/`.
-- [ ] **2.9.2** Run `python -m pytest tests/test_video_gen.py` and confirm green.
+  - [ ] `test_make_reel_produces_mp4`: produces a file, ffprobe confirms H.264. (Mocked unit test done, need true integration test)
+  - [x] `test_aspect_9_16`: dimensions are 1080×1920.
+  - [x] `test_aspect_1_1`: dimensions are 1080×1080.
+  - [ ] `test_file_size_under_30mb_for_30s`: file size ≤ 30 MB. (Mocked unit test done, need true integration test)
+  - [x] `test_nasheed_picked_from_theme`: nasheed is in the theme's pool.
+  - [x] `test_dry_run_writes_to_pending`: output path is under `output/pending/`.
+- [ ] **2.9.2** Run `python -m pytest tests/test_video_gen.py` and confirm green (including integration tests).
 
 ### 2.10 — Verify Phase 2
 

@@ -167,3 +167,100 @@ def test_normalize_audio(dummy_themes_path):
     
     norm_video = gen._normalize_audio(video)
     assert norm_video.audio is not None
+
+# --- Smoke tests for Phase 2.9.1 ---
+
+def test_make_reel_produces_mp4(dummy_themes_path, tmp_path):
+    """Verifies MoviePy export is configured to use H.264, yuv420p, and faststart."""
+    from unittest.mock import patch, MagicMock
+    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path)
+    
+    with patch("scripts.video_gen.ImageClip"), \
+         patch.object(gen, "_build_canvas", return_value=(1080, 1920)), \
+         patch.object(gen, "_apply_ken_burns"), \
+         patch.object(gen, "_add_vertical_gradient_bg"), \
+         patch("scripts.video_gen.CompositeVideoClip"), \
+         patch.object(gen, "_time_subtitles", return_value=[]), \
+         patch.object(gen, "_compose_cards"), \
+         patch.object(gen, "_attach_audio"), \
+         patch.object(gen, "_normalize_audio") as mock_norm, \
+         patch("PIL.Image.open") as mock_img_open:
+        
+        mock_img_open.return_value.convert.return_value = MagicMock()
+        mock_video = MagicMock()
+        mock_norm.return_value = mock_video
+        
+        out = gen.make_reel({"id": 123}, "dummy.png", "dummy.mp3", duration=30.0, aspect="9:16", dry_run=False)
+        
+        mock_video.write_videofile.assert_called_once()
+        kwargs = mock_video.write_videofile.call_args[1]
+        assert kwargs.get("codec") == "libx264"
+        assert kwargs.get("preset") == "medium"
+        assert "yuv420p" in kwargs.get("ffmpeg_params", [])
+        assert "+faststart" in kwargs.get("ffmpeg_params", [])
+
+def test_aspect_9_16(dummy_themes_path):
+    """dimensions are 1080x1920."""
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    assert gen._build_canvas("9:16") == (1080, 1920)
+
+def test_aspect_1_1(dummy_themes_path):
+    """dimensions are 1080x1080."""
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    assert gen._build_canvas("1:1") == (1080, 1080)
+
+def test_file_size_under_30mb_for_30s(dummy_themes_path, tmp_path):
+    """Verifies export bitrate configuration is consistent with the target file size."""
+    from unittest.mock import patch, MagicMock
+    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path)
+    
+    with patch("scripts.video_gen.ImageClip"), \
+         patch.object(gen, "_build_canvas", return_value=(1080, 1920)), \
+         patch.object(gen, "_apply_ken_burns"), \
+         patch.object(gen, "_add_vertical_gradient_bg"), \
+         patch("scripts.video_gen.CompositeVideoClip"), \
+         patch.object(gen, "_time_subtitles", return_value=[]), \
+         patch.object(gen, "_compose_cards"), \
+         patch.object(gen, "_attach_audio"), \
+         patch.object(gen, "_normalize_audio") as mock_norm, \
+         patch("PIL.Image.open") as mock_img_open:
+         
+        mock_img_open.return_value.convert.return_value = MagicMock()
+        mock_video = MagicMock()
+        mock_norm.return_value = mock_video
+        
+        out = gen.make_reel({"id": 123}, "dummy.png", "dummy.mp3", duration=30.0, aspect="9:16", dry_run=False)
+        
+        kwargs = mock_video.write_videofile.call_args[1]
+        assert kwargs.get("bitrate") == "5000k"
+        assert kwargs.get("audio_bitrate") == "192k"
+
+def test_nasheed_picked_from_theme(dummy_themes_path):
+    """nasheed is in the theme's pool."""
+    gen = ReelGenerator(assets_dir="/mock", output_dir="/mock", themes_path=dummy_themes_path)
+    picked = gen._pick_nasheed("Guidance")
+    assert picked.name in ["track1.mp3", "track2.mp3"]
+
+def test_dry_run_writes_to_pending(dummy_themes_path, tmp_path):
+    """output path is under output/pending/."""
+    from unittest.mock import patch, MagicMock
+    gen = ReelGenerator(assets_dir="/mock", output_dir=tmp_path, themes_path=dummy_themes_path)
+    
+    with patch("scripts.video_gen.ImageClip"), \
+         patch.object(gen, "_build_canvas", return_value=(1080, 1920)), \
+         patch.object(gen, "_apply_ken_burns"), \
+         patch.object(gen, "_add_vertical_gradient_bg"), \
+         patch("scripts.video_gen.CompositeVideoClip"), \
+         patch.object(gen, "_time_subtitles", return_value=[]), \
+         patch.object(gen, "_compose_cards"), \
+         patch.object(gen, "_attach_audio"), \
+         patch.object(gen, "_normalize_audio") as mock_norm, \
+         patch("PIL.Image.open") as mock_img_open:
+         
+        mock_img_open.return_value.convert.return_value = MagicMock()
+        mock_video = MagicMock()
+        mock_norm.return_value = mock_video
+        
+        out_path = gen.make_reel({"id": 123}, "dummy.png", "dummy.mp3", duration=10.0, aspect="9:16", dry_run=True)
+        assert "pending" in out_path.parts
+
