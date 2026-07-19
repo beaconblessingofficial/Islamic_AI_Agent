@@ -5,7 +5,7 @@ from pathlib import Path
 
 from scripts.config import config
 from database.dao import VerseDB
-from database.history import record_nasheed_use
+from database.history import record_nasheed_use, init_db
 from scripts.video_gen import ReelGenerator
 
 # Configure logging
@@ -23,6 +23,7 @@ def main():
     args = parser.parse_args()
 
     logger.info("Initializing database and generators...")
+    init_db()
     dao = VerseDB(config.CSV_PATH, config.USED_VERSES_PATH)
     
     # Select Verse
@@ -32,7 +33,7 @@ def main():
             logger.error(f"Verse ID {args.verse_id} not found in database.")
             sys.exit(1)
     else:
-        verse = dao.select_random(theme=args.theme)
+        verse = dao.select_random(theme=args.theme, dry_run=args.dry_run)
         if verse is None:
             logger.error("No unused verses found. Consider resetting used verses.")
             sys.exit(1)
