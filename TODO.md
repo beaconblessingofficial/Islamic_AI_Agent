@@ -202,9 +202,9 @@ These two bugs produce the "boxes for Arabic" and "transliteration overlaps the 
 
 ### 2.8 — Entry point and CLI
 
-- [ ] **2.8.1** Create `scripts/make_reel.py`: `python -m scripts.make_reel --verse-id N --duration 30 [--aspect 9:16] [--theme T] [--dry-run]`.
-- [ ] **2.8.2** `--dry-run` writes the reel to `output/pending/` instead of `output/reels/`.
-- [ ] **2.8.3** BLOCKED on 2.2. Log the nasheed choice to `nasheed_history` table on every reel (real or dry-run).
+- [x] **2.8.1** Create `scripts/make_reel.py`: `python -m scripts.make_reel --verse-id N --duration 30 [--aspect 9:16] [--theme T] [--dry-run]`.
+- [x] **2.8.2** `--dry-run` writes the reel to `output/pending/` instead of `output/reels/`.
+- [x] **2.8.3** BLOCKED on 2.2. Log the nasheed choice to `nasheed_history` table on every reel (real or dry-run).
 
 ### 2.9 — Tests
 
